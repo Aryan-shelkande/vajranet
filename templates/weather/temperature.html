@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Temperature monitoring</h1>
+  <p>City temperatures from forecast / model analysis fields with a 7-day outlook.</p>
+  <form class="search-bar" method="get" style="max-width:520px">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input name="city" value="{{ city }}" aria-label="City">
+    <button type="submit">Update</button>
+  </form>
+</section>
+{% if error %}<div class="error-banner section">{{ error }}</div>{% endif %}
+{% if current %}
+<article class="panel section">
+  <div class="meta"><span class="badge forecast">{{ current.data_kind|upper }}</span> {{ current.source }}</div>
+  <h2>{{ current.location.name }} — {{ current.temperature_c|floatformat:1 }}°C</h2>
+  <p class="meta">Feels like {{ current.feels_like_c|floatformat:1 }}°C · {{ current.weather_description }}</p>
+  <canvas id="temp-chart" height="140" aria-label="Temperature chart"></canvas>
+  <div class="forecast-scroll" style="margin-top:1rem">
+    {% for d in forecast.daily %}
+      <div class="day-card">
+        <div class="t">{{ d.time }}</div>
+        <strong>{{ d.temperature_max_c|floatformat:0 }}° / {{ d.temperature_min_c|floatformat:0 }}°</strong>
+      </div>
+    {% endfor %}
+  </div>
+</article>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+window.VAJRANET_DAILY = [{% for d in forecast.daily %}{time:"{{ d.time }}",min:{{ d.temperature_min_c|default:"null" }},max:{{ d.temperature_max_c|default:"null" }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+document.addEventListener('DOMContentLoaded', () => VajraNet.initTempChart(window.VAJRANET_DAILY));
+</script>
+{% endblock %}

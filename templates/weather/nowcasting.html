@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Thunderstorm nowcasting</h1>
+  <p>Baseline rule-based risk estimate using humidity, CAPE, rainfall probability, wind, and forecast weather codes. Not an official warning and not an AI prediction.</p>
+  <form class="search-bar" method="get" style="max-width:520px">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input name="city" value="{{ city }}" placeholder="Search city" aria-label="City">
+    <button type="submit">Assess</button>
+  </form>
+</section>
+{% if error %}<div class="error-banner section">{{ error }}</div>{% endif %}
+{% if nowcast %}
+<article class="panel section">
+  <div class="meta">
+    <span class="badge model">Baseline · Derived risk · Model estimate</span>
+    Engine: {{ nowcast.engine_type }} · Updated {{ nowcast.observed_at }} {{ nowcast.timezone }}
+    · Inputs: {{ nowcast.source_inputs.weather }} + forecast
+  </div>
+  <div class="risk-hero">
+    <div>
+      <h2>{{ nowcast.location.name }}</h2>
+      <div class="risk-level {{ nowcast.risk_level }}">{{ nowcast.risk_level }}</div>
+      <p>Score {{ nowcast.risk_score }}/100 · {{ nowcast.label }}</p>
+      <div class="risk-meter" aria-hidden="true"><span style="width:{{ nowcast.risk_score }}%"></span></div>
+      <p class="meta">Not an AI prediction · Not an official warning</p>
+    </div>
+    {% if current %}
+    <div class="stat"><strong>{{ current.temperature_c|floatformat:0 }}°C</strong><span>{{ current.weather_description }}</span></div>
+    {% endif %}
+  </div>
+  <p class="meta">{{ nowcast.disclaimer }}</p>
+  {% if nowcast.unused_inputs_note %}<p class="meta">{{ nowcast.unused_inputs_note }}</p>{% endif %}
+  <h3>Explainable factors</h3>
+  <ul class="factor-list">
+    {% for f in nowcast.factors %}
+      <li>• {{ f.name }} — {{ f.signal }}{% if f.value %} ({{ f.value }}){% endif %}</li>
+    {% endfor %}
+  </ul>
+</article>
+{% endif %}
+{% endblock %}

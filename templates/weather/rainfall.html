@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Rainfall monitoring</h1>
+  <p>Precipitation from forecast model fields — clearly labeled, not station-gauge observations unless noted.</p>
+  <form class="search-bar" method="get" style="max-width:520px">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input name="city" value="{{ city }}" aria-label="City">
+    <button type="submit">Update</button>
+  </form>
+</section>
+{% if error %}<div class="error-banner section">{{ error }}</div>{% endif %}
+{% if current %}
+<article class="panel section">
+  <div class="meta"><span class="badge forecast">{{ current.data_kind|upper }}</span> {{ current.source }} · {{ current.observed_at }}</div>
+  <h2>{{ current.location.name }}</h2>
+  <div class="grid grid-3">
+    <div class="stat"><strong>{{ current.rainfall_mm|default:0 }} mm</strong><span>Current precipitation</span></div>
+    <div class="stat"><strong>{{ current.humidity_pct|floatformat:0 }}%</strong><span>Humidity</span></div>
+    <div class="stat"><strong>{{ current.weather_description }}</strong><span>Condition</span></div>
+  </div>
+  <h3 style="margin-top:1rem">Next 12 hours</h3>
+  <div style="overflow:auto">
+    <table class="table">
+      <thead><tr><th>Time</th><th>mm</th><th>Probability</th></tr></thead>
+      <tbody>
+        {% for h in forecast.hourly|slice:":12" %}
+        <tr><td>{{ h.time }}</td><td>{{ h.precipitation_mm|default:0 }}</td><td>{{ h.precipitation_probability_pct|default:"—" }}%</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+{% endif %}
+{% endblock %}

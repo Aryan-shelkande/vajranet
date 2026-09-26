@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Monitoring view</h1>
+  <p>Technical atmospheric and hazard feeds for operators. Unavailable sources stay labeled — never shown as live.</p>
+  <form class="search-bar" method="get" style="max-width:520px">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input name="city" value="{{ city }}" aria-label="City">
+    <button type="submit">Refresh</button>
+  </form>
+</section>
+{% if error %}<div class="error-banner section">{{ error }}</div>{% endif %}
+<div class="grid grid-2 section">
+  <article class="panel">
+    <h2>Atmosphere</h2>
+    {% if current %}
+    <div class="grid grid-2">
+      <div class="stat"><strong>{{ current.temperature_c }}°C</strong><span>Temperature</span></div>
+      <div class="stat"><strong>{{ current.cape_jkg|default:"—" }}</strong><span>CAPE</span></div>
+      <div class="stat"><strong>{{ current.lifted_index|default:"—" }}</strong><span>Lifted index</span></div>
+      <div class="stat"><strong>{{ current.pressure_hpa }}</strong><span>Pressure hPa</span></div>
+    </div>
+    {% endif %}
+    {% if nowcast %}<p class="meta" style="margin-top:0.75rem">Nowcast {{ nowcast.risk_level }} (score {{ nowcast.risk_score }}) · <span class="badge model">Model estimate</span></p>{% endif %}
+  </article>
+  <article class="panel">
+    <h2>Lightning</h2>
+    {% if lightning.available %}
+      <div class="stat"><strong>{{ lightning.count }}</strong><span>Strikes · Observed</span></div>
+    {% else %}
+      <div class="empty"><span class="badge unavailable">Unavailable</span><p>{{ lightning.message }}</p></div>
+    {% endif %}
+  </article>
+  <article class="panel">
+    <h2>Earthquakes (USGS)</h2>
+    {% if earthquakes.available %}
+      <ul class="factor-list">{% for e in earthquakes.events|slice:":8" %}<li>• {{ e.title }} (M{{ e.magnitude }})</li>{% empty %}<li>• No recent events in India bbox.</li>{% endfor %}</ul>
+    {% else %}<div class="empty">{{ earthquakes.message }}</div>{% endif %}
+  </article>
+  <article class="panel">
+    <h2>Wildfires (NASA FIRMS)</h2>
+    {% if wildfires.available %}
+      <p>{{ wildfires.hotspots|length }} hotspots</p>
+    {% else %}
+      <div class="empty">
+        <span class="badge unavailable">API key required</span>
+        <p>{{ wildfires.message }}</p>
+        <p class="meta">Data source requires configuration.</p>
+      </div>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}

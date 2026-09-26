@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Radar</h1>
+  <p>RainViewer mosaic for personal/educational awareness — not an official IMD operational radar product. Toggle the radar layer to overlay recent reflectivity.</p>
+  <form class="search-bar" method="get" style="max-width:520px">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input name="city" value="{{ city }}" aria-label="City">
+    <button type="submit">Update</button>
+  </form>
+</section>
+{% if error %}<div class="error-banner section">{{ error }}</div>{% endif %}
+{% if current %}
+<div class="meta section" style="margin-bottom:0.5rem">
+  <span class="badge forecast">{{ current.data_kind|upper }}</span>
+  {{ current.location.name }} · {{ current.temperature_c|floatformat:0 }}°C · {{ current.weather_description }}
+  · {{ current.source }} · {{ current.observed_at }}
+</div>
+{% endif %}
+<section class="panel map-panel section" id="map-section">
+  <h2>India radar map</h2>
+  <p class="meta">Basemap: OpenFreeMap Liberty. Radar tiles: RainViewer (attribution required). Decorative sunset atmosphere does not cover map controls.</p>
+  <div class="layer-controls" id="layer-controls">
+    <label><input type="checkbox" data-layer="temperature" checked> Temperature</label>
+    <label><input type="checkbox" data-layer="rainfall" checked> Rainfall</label>
+    <label><input type="checkbox" data-layer="earthquakes"> Earthquakes <span class="layer-note">USGS observed</span></label>
+    <label><input type="checkbox" data-layer="radar" checked> Radar <span class="layer-note">RainViewer</span></label>
+    <label class="is-disabled">
+      <input type="checkbox" data-layer="lightning" disabled> Lightning <span class="layer-note">Unavailable</span>
+    </label>
+  </div>
+  <p class="meta" id="radar-status" aria-live="polite"></p>
+  <div id="india-map" class="map-frame" role="region" aria-label="India radar map"></div>
+  <div class="map-error" id="map-error" role="alert">Map temporarily unavailable. Please retry.</div>
+  <div class="map-legend" aria-label="Map legend">
+    <div class="legend-item"><span class="legend-swatch temp"></span> Temperature</div>
+    <div class="legend-item"><span class="legend-swatch rain"></span> Rainfall</div>
+    <div class="legend-item"><span class="legend-swatch quake"></span> Earthquakes</div>
+    <div class="legend-item"><span class="legend-swatch radar"></span> Radar (RainViewer)</div>
+  </div>
+  <p class="meta" style="margin-top:0.75rem">Radar data is provided by RainViewer and is not an official IMD operational radar product.</p>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+  window.VAJRANET_CITY = "{{ city|escapejs }}";
+  window.VAJRANET_WEATHER = null;
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!window.VajraNet) return;
+    VajraNet.initHomeMap();
+    const radar = document.querySelector('#layer-controls input[data-layer="radar"]');
+    if (radar && radar.checked) VajraNet.enableRadar();
+  });
+</script>
+{% endblock %}

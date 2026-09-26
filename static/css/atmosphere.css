@@ -1,0 +1,858 @@
+/* VajraNet atmospheric theme system — living sky layer
+   Page themes: sunrise | cloudy | storm | sunset | night
+   Weather conditions: cond-*
+   Time of day: tod-*
+   Scroll: --atm-scroll (0–1) parallax on .atm-layer
+   Motion: transform/opacity on .atm-drift children (independent of scroll)
+*/
+
+:root {
+  --atm-scroll: 0;
+  --atm-intensity: 0.55;
+}
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.atmosphere .atm-layer {
+  position: absolute;
+  inset: -8% -12%;
+  will-change: transform;
+  transform: translate3d(0, calc(var(--atm-scroll) * var(--atm-parallax, 0px)), 0);
+  transition: opacity 0.7s ease;
+  pointer-events: none;
+}
+
+.atmosphere .atm-drift {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.atmosphere .atm-sky {
+  inset: 0;
+  --atm-parallax: 0px;
+  background: linear-gradient(180deg, var(--sky-2) 0%, var(--sky-1) 45%, var(--sky-0) 100%);
+}
+
+.atmosphere .atm-horizon {
+  bottom: -10%;
+  top: auto;
+  height: 60%;
+  left: -12%;
+  right: -12%;
+  opacity: 0;
+  --atm-parallax: 20px;
+  background: radial-gradient(
+    ellipse 120% 90% at 50% 100%,
+    rgba(255, 214, 176, 0.34),
+    rgba(255, 228, 200, 0.1) 42%,
+    transparent 72%
+  );
+}
+
+.atmosphere .atm-orb {
+  width: min(22vw, 160px);
+  height: min(22vw, 160px);
+  border-radius: 50%;
+  top: auto;
+  right: 16%;
+  left: auto;
+  bottom: 22%;
+  inset: unset;
+  opacity: 0;
+  --atm-parallax: -14px;
+  overflow: visible;
+}
+
+.atmosphere .atm-orb-body {
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 244, 210, 0.95) 0%,
+    rgba(255, 220, 150, 0.55) 28%,
+    rgba(255, 190, 110, 0.18) 52%,
+    transparent 72%
+  );
+  filter: blur(1px);
+}
+
+.atmosphere .atm-orb-aura {
+  position: absolute;
+  inset: -55%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 220, 160, 0.35) 0%,
+    rgba(255, 200, 120, 0.12) 40%,
+    transparent 70%
+  );
+  filter: blur(18px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.atmosphere .atm-moon {
+  width: min(12vw, 88px);
+  height: min(12vw, 88px);
+  border-radius: 50%;
+  top: 10%;
+  right: 12%;
+  left: auto;
+  bottom: auto;
+  inset: unset;
+  opacity: 0;
+  --atm-parallax: -10px;
+}
+
+.atmosphere .atm-moon .atm-drift {
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 38% 38%,
+    rgba(240, 245, 255, 0.55) 0%,
+    rgba(200, 215, 240, 0.22) 42%,
+    transparent 70%
+  );
+  filter: blur(2px);
+  box-shadow: 0 0 40px rgba(180, 210, 255, 0.18);
+}
+
+.atmosphere .atm-clouds {
+  opacity: 0.5;
+  --atm-parallax: 26px;
+}
+
+.atmosphere .atm-clouds .atm-drift {
+  width: 240%;
+  left: -50%;
+  right: auto;
+  background:
+    radial-gradient(ellipse 26% 36% at 10% 30%, rgba(255, 255, 255, 0.72), transparent 68%),
+    radial-gradient(ellipse 22% 30% at 28% 18%, rgba(236, 244, 252, 0.58), transparent 70%),
+    radial-gradient(ellipse 28% 34% at 48% 38%, rgba(210, 224, 238, 0.62), transparent 70%),
+    radial-gradient(ellipse 20% 26% at 68% 22%, rgba(255, 255, 255, 0.5), transparent 68%),
+    radial-gradient(ellipse 24% 30% at 86% 46%, rgba(198, 214, 230, 0.55), transparent 70%);
+  animation: atm-drift-left 58s linear infinite;
+}
+
+.atmosphere .atm-clouds-b {
+  opacity: 0.42;
+  --atm-parallax: 42px;
+}
+
+.atmosphere .atm-clouds-b .atm-drift {
+  width: 240%;
+  left: -70%;
+  right: auto;
+  background:
+    radial-gradient(ellipse 28% 34% at 16% 60%, rgba(185, 204, 222, 0.58), transparent 70%),
+    radial-gradient(ellipse 32% 38% at 46% 72%, rgba(255, 255, 255, 0.48), transparent 72%),
+    radial-gradient(ellipse 24% 30% at 76% 54%, rgba(175, 196, 216, 0.5), transparent 70%);
+  animation: atm-drift-right 42s linear infinite;
+}
+
+.atmosphere .atm-clouds-c {
+  opacity: 0.28;
+  --atm-parallax: 14px;
+}
+
+.atmosphere .atm-clouds-c .atm-drift {
+  width: 220%;
+  left: -40%;
+  right: auto;
+  background:
+    radial-gradient(ellipse 38% 24% at 28% 16%, rgba(255, 255, 255, 0.32), transparent 70%),
+    radial-gradient(ellipse 34% 22% at 72% 26%, rgba(220, 232, 244, 0.28), transparent 72%);
+  animation: atm-drift-left 80s linear infinite;
+  filter: blur(0.5px);
+}
+
+.atmosphere .atm-haze {
+  inset: 0;
+  opacity: 0.24;
+  --atm-parallax: 8px;
+  background: linear-gradient(
+    180deg,
+    transparent 18%,
+    rgba(255, 255, 255, 0.1) 55%,
+    rgba(255, 255, 255, 0.22) 100%
+  );
+}
+
+.atmosphere .atm-rain {
+  inset: 0;
+  opacity: 0;
+  --atm-parallax: 4px;
+}
+
+.atmosphere .atm-rain .atm-drift {
+  background-image:
+    repeating-linear-gradient(
+      105deg,
+      transparent 0 9px,
+      rgba(70, 120, 170, 0.28) 9px 10.5px,
+      transparent 10.5px 22px
+    ),
+    repeating-linear-gradient(
+      112deg,
+      transparent 0 14px,
+      rgba(100, 145, 190, 0.18) 14px 15.5px,
+      transparent 15.5px 32px
+    );
+  background-size: 38px 100px, 50px 130px;
+  animation: atm-rain-fall 0.7s linear infinite;
+}
+
+.atmosphere .atm-storm-glow {
+  inset: 0;
+  opacity: 0;
+  --atm-parallax: 4px;
+  background: radial-gradient(
+    ellipse 55% 40% at 70% 18%,
+    rgba(170, 200, 255, 0.16),
+    transparent 68%
+  );
+}
+
+.atmosphere .atm-lightning {
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 75% 55% at 62% 26%,
+    rgba(235, 245, 255, 0.42),
+    rgba(200, 220, 255, 0.12) 40%,
+    transparent 65%
+  );
+  transition: opacity 0.08s linear;
+}
+
+.atmosphere .atm-lightning.is-flash {
+  opacity: 0.55;
+}
+
+.atmosphere .atm-stars {
+  inset: 0;
+  opacity: 0;
+  --atm-parallax: -8px;
+}
+
+.atmosphere .atm-stars .atm-drift {
+  background-image:
+    radial-gradient(2px 2px at 11% 16%, rgba(255, 255, 255, 0.95), transparent),
+    radial-gradient(1.2px 1.2px at 24% 38%, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(2.2px 2.2px at 41% 12%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 57% 31%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1.6px 1.6px at 73% 19%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.1px 1.1px at 86% 44%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1.8px 1.8px at 19% 64%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 48% 74%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.4px 1.4px at 69% 81%, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(1.3px 1.3px at 93% 9%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(0.9px 0.9px at 33% 52%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1.1px 1.1px at 81% 66%, rgba(255, 255, 255, 0.55), transparent);
+  animation: atm-star-twinkle 10s ease-in-out infinite, atm-star-drift 100s linear infinite;
+}
+
+.atmosphere .atm-particles {
+  inset: 0;
+  opacity: 0;
+  --atm-parallax: 12px;
+  background-image:
+    radial-gradient(0.9px 0.9px at 22% 28%, rgba(220, 235, 255, 0.28), transparent),
+    radial-gradient(0.7px 0.7px at 58% 58%, rgba(220, 235, 255, 0.18), transparent),
+    radial-gradient(0.8px 0.8px at 76% 22%, rgba(220, 235, 255, 0.22), transparent);
+}
+
+/* —— Sunrise / Overview —— */
+body.theme-sunrise .atmosphere .atm-sky {
+  background:
+    radial-gradient(ellipse 80% 50% at 78% 78%, rgba(255, 210, 160, 0.22), transparent 58%),
+    linear-gradient(
+      180deg,
+      #a9d4f5 0%,
+      #cfe6fb 26%,
+      #eaf3fc 48%,
+      #fff3e6 76%,
+      #fff9f2 100%
+    );
+  animation: atm-sky-shift 60s ease-in-out infinite alternate;
+}
+body.theme-sunrise .atmosphere .atm-horizon {
+  opacity: calc(0.78 + var(--atm-scroll) * 0.1);
+  background: radial-gradient(
+    ellipse 130% 95% at 48% 110%,
+    rgba(255, 198, 140, 0.5),
+    rgba(255, 225, 185, 0.18) 40%,
+    transparent 72%
+  );
+  animation: atm-horizon-pulse 22s ease-in-out infinite;
+}
+body.theme-sunrise .atmosphere .atm-haze {
+  opacity: 0.34;
+  background: linear-gradient(
+    180deg,
+    transparent 20%,
+    rgba(255, 246, 230, 0.2) 65%,
+    rgba(255, 238, 210, 0.34) 100%
+  );
+  animation: atm-horizon-pulse 28s ease-in-out infinite;
+}
+body.theme-sunrise .atmosphere .atm-orb {
+  opacity: calc(0.92 - var(--atm-scroll) * 0.12);
+  bottom: calc(12% + var(--atm-scroll) * 10%);
+  right: 18%;
+  width: min(18vw, 130px);
+  height: min(18vw, 130px);
+}
+body.theme-sunrise .atmosphere .atm-orb-body {
+  animation: atm-sun-rise 80s ease-in-out infinite alternate, atm-sun-glow 16s ease-in-out infinite;
+}
+body.theme-sunrise .atmosphere .atm-orb-aura {
+  animation: atm-sun-glow 16s ease-in-out infinite;
+}
+body.theme-sunrise .atmosphere .atm-clouds { opacity: calc(0.42 + var(--atm-scroll) * 0.08); }
+body.theme-sunrise .atmosphere .atm-clouds-b { opacity: 0.28; }
+body.theme-sunrise .atmosphere .atm-clouds-c { opacity: 0.18; }
+body.theme-sunrise.tod-day .atmosphere .atm-orb {
+  bottom: calc(38% + var(--atm-scroll) * 6%);
+  opacity: 0.7;
+}
+body.theme-sunrise.tod-day .atmosphere .atm-horizon { opacity: 0.35; }
+body.theme-sunrise.tod-evening .atmosphere .atm-horizon {
+  opacity: 0.9;
+  background: radial-gradient(
+    ellipse 130% 95% at 50% 110%,
+    rgba(255, 160, 110, 0.48),
+    rgba(255, 200, 150, 0.16) 40%,
+    transparent 72%
+  );
+}
+body.theme-sunrise.tod-night .atmosphere .atm-orb { opacity: 0.7; }
+body.theme-sunrise.tod-night .atmosphere .atm-sky {
+  filter: brightness(0.92);
+}
+body.theme-sunrise.tod-morning .atmosphere .atm-orb {
+  opacity: calc(0.98 - var(--atm-scroll) * 0.1);
+}
+
+/* —— Cloudy / Weather —— */
+body.theme-cloudy .atmosphere .atm-sky {
+  background: linear-gradient(180deg, #8fabc4 0%, #b7c9db 34%, #dce6f0 70%, #eaf0f6 100%);
+  animation: atm-sky-shift 50s ease-in-out infinite alternate;
+}
+body.theme-sunrise .atmosphere .atm-clouds .atm-drift,
+body.theme-cloudy .atmosphere .atm-clouds .atm-drift {
+  background:
+    radial-gradient(ellipse 26% 36% at 10% 30%, rgba(255, 255, 255, 0.85), transparent 68%),
+    radial-gradient(ellipse 22% 30% at 28% 18%, rgba(190, 210, 228, 0.7), transparent 70%),
+    radial-gradient(ellipse 28% 34% at 48% 38%, rgba(170, 192, 214, 0.68), transparent 70%),
+    radial-gradient(ellipse 20% 26% at 68% 22%, rgba(255, 255, 255, 0.65), transparent 68%),
+    radial-gradient(ellipse 24% 30% at 86% 46%, rgba(160, 184, 208, 0.62), transparent 70%);
+}
+body.theme-sunrise .atmosphere .atm-clouds-b .atm-drift,
+body.theme-cloudy .atmosphere .atm-clouds-b .atm-drift {
+  background:
+    radial-gradient(ellipse 28% 34% at 16% 60%, rgba(150, 174, 198, 0.65), transparent 70%),
+    radial-gradient(ellipse 32% 38% at 46% 72%, rgba(255, 255, 255, 0.58), transparent 72%),
+    radial-gradient(ellipse 24% 30% at 76% 54%, rgba(140, 164, 188, 0.55), transparent 70%);
+}
+body.theme-sunrise .atmosphere .atm-orb-body {
+  filter: blur(0.5px);
+  background: radial-gradient(
+    circle,
+    rgba(255, 248, 220, 1) 0%,
+    rgba(255, 220, 140, 0.7) 26%,
+    rgba(255, 185, 100, 0.28) 50%,
+    transparent 72%
+  );
+}
+body.theme-night .atmosphere .atm-stars .atm-drift {
+  background-image:
+    radial-gradient(2.4px 2.4px at 11% 16%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 24% 38%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(2.8px 2.8px at 41% 12%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 57% 31%, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(2px 2px at 73% 19%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1.3px 1.3px at 86% 44%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(2.2px 2.2px at 19% 64%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 48% 74%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.8px 1.8px at 69% 81%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.6px 1.6px at 93% 9%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.1px 1.1px at 33% 52%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1.4px 1.4px at 81% 66%, rgba(255, 255, 255, 0.7), transparent);
+}
+body.theme-night .atmosphere .atm-moon .atm-drift {
+  background: radial-gradient(
+    circle at 38% 38%,
+    rgba(250, 252, 255, 0.85) 0%,
+    rgba(210, 225, 245, 0.4) 40%,
+    transparent 70%
+  );
+  box-shadow: 0 0 60px rgba(180, 210, 255, 0.35), 0 0 120px rgba(140, 180, 240, 0.18);
+}
+body.theme-cloudy .atmosphere .atm-clouds { opacity: calc(0.82 + var(--atm-scroll) * 0.05); }
+body.theme-cloudy .atmosphere .atm-clouds .atm-drift {
+  animation-duration: 78s;
+  background:
+    radial-gradient(ellipse 30% 38% at 14% 30%, rgba(255, 255, 255, 0.62), transparent 68%),
+    radial-gradient(ellipse 26% 32% at 36% 20%, rgba(230, 240, 250, 0.5), transparent 70%),
+    radial-gradient(ellipse 32% 36% at 58% 38%, rgba(200, 216, 232, 0.55), transparent 70%),
+    radial-gradient(ellipse 24% 28% at 80% 24%, rgba(255, 255, 255, 0.42), transparent 68%),
+    radial-gradient(ellipse 28% 32% at 92% 50%, rgba(185, 204, 222, 0.48), transparent 70%);
+}
+body.theme-cloudy .atmosphere .atm-clouds-b { opacity: calc(0.58 + var(--atm-scroll) * 0.06); }
+body.theme-cloudy .atmosphere .atm-clouds-b .atm-drift { animation-duration: 52s; }
+body.theme-cloudy .atmosphere .atm-clouds-c { opacity: 0.32; }
+body.theme-cloudy .atmosphere .atm-haze { opacity: 0.48; }
+body.theme-cloudy .atmosphere .atm-orb { opacity: 0; }
+body.theme-cloudy.cond-sunny .atmosphere .atm-sky {
+  background: linear-gradient(180deg, #9fc0dc 0%, #c8dceb 42%, #eaf2f8 100%);
+}
+body.theme-cloudy.cond-sunny .atmosphere .atm-orb {
+  opacity: 0.7;
+  bottom: 48%;
+  right: 14%;
+}
+body.theme-cloudy.cond-sunny .atmosphere .atm-orb-body {
+  animation: atm-sun-glow 18s ease-in-out infinite;
+}
+body.theme-cloudy.cond-sunny .atmosphere .atm-clouds { opacity: 0.4; }
+body.theme-cloudy.cond-sunny .atmosphere .atm-clouds-b { opacity: 0.24; }
+body.theme-cloudy.cond-partly-cloudy .atmosphere .atm-orb {
+  opacity: 0.4;
+  bottom: 42%;
+}
+body.theme-cloudy.cond-partly-cloudy .atmosphere .atm-clouds { opacity: 0.65; }
+body.theme-cloudy.cond-rain .atmosphere .atm-sky,
+body.theme-cloudy.cond-heavy-rain .atmosphere .atm-sky {
+  background: linear-gradient(180deg, #7a93ac 0%, #a0b4c8 40%, #c8d6e4 100%);
+}
+body.theme-cloudy.cond-rain .atmosphere .atm-clouds,
+body.theme-cloudy.cond-heavy-rain .atmosphere .atm-clouds {
+  opacity: 0.9;
+  filter: brightness(0.9);
+}
+body.theme-cloudy.cond-thunderstorm .atmosphere .atm-sky {
+  background: linear-gradient(180deg, #5f748c 0%, #879db4 42%, #b8c8d8 100%);
+}
+
+/* —— Storm / Alerts —— */
+body.theme-storm .atmosphere .atm-sky {
+  background: linear-gradient(
+    180deg,
+    #24344e 0%,
+    #3d5068 26%,
+    #627890 55%,
+    #97a9bd 80%,
+    #c5d1df 100%
+  );
+  animation: atm-sky-shift 40s ease-in-out infinite alternate;
+}
+body.theme-storm .atmosphere .atm-clouds {
+  opacity: 0.95;
+  filter: brightness(0.82) saturate(0.6);
+}
+body.theme-storm .atmosphere .atm-clouds .atm-drift {
+  animation-duration: 64s;
+  background:
+    radial-gradient(ellipse 32% 40% at 16% 24%, rgba(170, 185, 210, 0.65), transparent 68%),
+    radial-gradient(ellipse 28% 34% at 48% 16%, rgba(130, 148, 175, 0.58), transparent 68%),
+    radial-gradient(ellipse 30% 36% at 78% 34%, rgba(150, 168, 190, 0.5), transparent 70%),
+    radial-gradient(ellipse 24% 28% at 34% 44%, rgba(110, 128, 155, 0.4), transparent 68%);
+}
+body.theme-storm .atmosphere .atm-clouds-b {
+  opacity: 0.7;
+  filter: brightness(0.7);
+}
+body.theme-storm .atmosphere .atm-clouds-b .atm-drift { animation-duration: 48s; }
+body.theme-storm .atmosphere .atm-clouds-c {
+  opacity: 0.4;
+  filter: brightness(0.65);
+}
+body.theme-storm .atmosphere .atm-rain {
+  opacity: 0.42;
+}
+body.theme-storm .atmosphere .atm-rain .atm-drift {
+  animation-duration: 0.7s;
+}
+body.theme-storm .atmosphere .atm-storm-glow {
+  opacity: calc(0.55 + var(--atm-scroll) * 0.12);
+  animation: atm-horizon-pulse 18s ease-in-out infinite;
+}
+body.theme-storm .atmosphere .atm-haze {
+  opacity: 0.38;
+  background: linear-gradient(180deg, transparent 8%, rgba(20, 32, 52, 0.28) 100%);
+}
+body.theme-storm.cond-sunny .atmosphere .atm-rain,
+body.theme-storm.cond-clear .atmosphere .atm-rain {
+  opacity: 0.18;
+}
+body.theme-storm.cond-sunny .atmosphere .atm-storm-glow,
+body.theme-storm.cond-clear .atmosphere .atm-storm-glow {
+  opacity: 0.3;
+}
+body.theme-storm .site-header {
+  background: rgba(230, 238, 247, 0.9);
+}
+body.theme-storm .page-hero h1 {
+  color: #f5f8fc;
+  text-shadow: 0 1px 16px rgba(20, 30, 50, 0.35);
+}
+body.theme-storm .page-hero p {
+  color: rgba(230, 236, 245, 0.9);
+}
+
+/* —— Sunset / Radar —— */
+body.theme-sunset .atmosphere .atm-sky {
+  background:
+    radial-gradient(ellipse 60% 45% at 76% 72%, rgba(255, 170, 110, 0.28), transparent 58%),
+    linear-gradient(
+      180deg,
+      #648ebc 0%,
+      #879fc8 16%,
+      #b0a4cb 36%,
+      #e0b090 60%,
+      #f4c9a4 78%,
+      #ffe8d4 100%
+    );
+  animation: atm-sky-shift 55s ease-in-out infinite alternate;
+}
+body.theme-sunset .atmosphere .atm-horizon {
+  opacity: calc(0.85 + var(--atm-scroll) * 0.08);
+  background: radial-gradient(
+    ellipse 125% 95% at 52% 108%,
+    rgba(255, 145, 90, 0.48),
+    rgba(255, 195, 145, 0.16) 40%,
+    transparent 72%
+  );
+  animation: atm-horizon-pulse 24s ease-in-out infinite;
+}
+body.theme-sunset .atmosphere .atm-orb {
+  opacity: calc(0.88 - var(--atm-scroll) * 0.1);
+  bottom: calc(16% - var(--atm-scroll) * 6%);
+  right: 18%;
+  width: min(16vw, 118px);
+  height: min(16vw, 118px);
+}
+body.theme-sunset .atmosphere .atm-orb-body {
+  background: radial-gradient(
+    circle,
+    rgba(255, 220, 170, 0.95) 0%,
+    rgba(255, 160, 90, 0.5) 34%,
+    rgba(255, 120, 70, 0.16) 55%,
+    transparent 72%
+  );
+  animation: atm-sun-set 90s ease-in-out infinite alternate, atm-sun-glow 20s ease-in-out infinite;
+}
+body.theme-sunset .atmosphere .atm-orb-aura {
+  background: radial-gradient(
+    circle,
+    rgba(255, 170, 100, 0.4) 0%,
+    rgba(255, 130, 80, 0.14) 42%,
+    transparent 70%
+  );
+  animation: atm-sun-glow 20s ease-in-out infinite;
+}
+body.theme-sunset .atmosphere .atm-clouds { opacity: 0.38; }
+body.theme-sunset .atmosphere .atm-clouds .atm-drift {
+  animation-duration: 100s;
+  background:
+    radial-gradient(ellipse 28% 30% at 20% 32%, rgba(255, 230, 210, 0.4), transparent 70%),
+    radial-gradient(ellipse 26% 28% at 62% 26%, rgba(200, 185, 220, 0.32), transparent 70%),
+    radial-gradient(ellipse 24% 26% at 86% 42%, rgba(255, 210, 180, 0.28), transparent 70%);
+}
+body.theme-sunset .atmosphere .atm-clouds-b { opacity: 0.26; }
+body.theme-sunset .atmosphere .atm-clouds-c { opacity: 0.16; }
+body.theme-sunset .atmosphere .atm-haze {
+  opacity: 0.44;
+  background: linear-gradient(
+    180deg,
+    transparent 18%,
+    rgba(255, 210, 175, 0.16) 58%,
+    rgba(255, 195, 150, 0.28) 100%
+  );
+}
+body.theme-sunset .map-panel,
+body.theme-sunset .map-frame {
+  position: relative;
+  z-index: 1;
+  box-shadow:
+    0 0 0 1px rgba(255, 200, 160, 0.2),
+    0 18px 52px rgba(60, 35, 20, 0.12),
+    0 0 90px rgba(255, 160, 100, 0.1);
+}
+
+/* —— Night / Nowcast —— */
+body.theme-night .atmosphere .atm-sky {
+  background:
+    radial-gradient(ellipse 55% 40% at 70% 10%, rgba(70, 110, 170, 0.24), transparent 58%),
+    linear-gradient(180deg, #081426 0%, #112038 36%, #183550 70%, #1f4562 100%);
+  animation: atm-sky-shift 70s ease-in-out infinite alternate;
+}
+body.theme-night .atmosphere .atm-moon {
+  opacity: calc(0.7 - var(--atm-scroll) * 0.1);
+}
+body.theme-night .atmosphere .atm-moon .atm-drift {
+  animation: atm-moon-glow 22s ease-in-out infinite;
+}
+body.theme-night .atmosphere .atm-stars {
+  opacity: calc(0.85 - var(--atm-scroll) * 0.12);
+}
+body.theme-night .atmosphere .atm-particles {
+  opacity: 0.32;
+  animation: atm-particle-drift 50s linear infinite;
+}
+body.theme-night .atmosphere .atm-clouds {
+  opacity: 0.28;
+  filter: brightness(0.45);
+}
+body.theme-night .atmosphere .atm-clouds .atm-drift { animation-duration: 110s; }
+body.theme-night .atmosphere .atm-clouds-b {
+  opacity: 0.18;
+  filter: brightness(0.4);
+}
+body.theme-night .atmosphere .atm-clouds-c { opacity: 0.1; }
+body.theme-night .atmosphere .atm-haze {
+  opacity: 0.26;
+  background: linear-gradient(180deg, transparent 30%, rgba(35, 65, 105, 0.32) 100%);
+}
+body.theme-night .atmosphere .atm-storm-glow {
+  opacity: 0.22;
+  background: radial-gradient(
+    ellipse 48% 32% at 58% 12%,
+    rgba(90, 140, 210, 0.2),
+    transparent 70%
+  );
+}
+body.theme-night.tod-day .atmosphere .atm-stars { opacity: 0.12; }
+body.theme-night.tod-day .atmosphere .atm-moon { opacity: 0.15; }
+body.theme-night.tod-morning .atmosphere .atm-stars { opacity: 0.3; }
+body.theme-night.tod-night .atmosphere .atm-stars {
+  opacity: calc(0.92 - var(--atm-scroll) * 0.1);
+}
+body.theme-night.tod-night .atmosphere .atm-moon { opacity: 0.78; }
+body.theme-night[data-intensity="high"] .atmosphere .atm-storm-glow { opacity: 0.45; }
+body.theme-night[data-intensity="high"] .atmosphere .atm-sky {
+  background:
+    radial-gradient(ellipse 55% 40% at 70% 10%, rgba(85, 100, 170, 0.28), transparent 58%),
+    linear-gradient(180deg, #060e1c 0%, #0e1a32 40%, #162844 100%);
+}
+body.theme-night { color: var(--text); }
+body.theme-night .site-header { background: rgba(244, 250, 255, 0.86); }
+body.theme-night .brand,
+body.theme-night .nav a,
+body.theme-night .header-meta { color: var(--text); }
+body.theme-night .nav a { color: var(--muted); }
+body.theme-night .nav a:hover,
+body.theme-night .nav a[aria-current="page"] { color: var(--text); }
+body.theme-night .page-hero h1,
+body.theme-night .hero-greeting {
+  color: #f4f8ff;
+  text-shadow: 0 1px 18px rgba(10, 20, 40, 0.35);
+}
+body.theme-night .page-hero p,
+body.theme-night .hero-sub,
+body.theme-night .hero-kicker {
+  color: rgba(220, 230, 245, 0.88);
+}
+
+/* —— Weather condition intensity —— */
+body.cond-sunny.theme-sunrise .atmosphere .atm-orb {
+  opacity: max(0.85, calc(var(--atm-intensity) * 1.1));
+}
+body.cond-sunny.theme-sunrise .atmosphere .atm-clouds { opacity: 0.22; }
+body.cond-sunny.theme-sunrise .atmosphere .atm-clouds-b { opacity: 0.12; }
+body.cond-sunny.theme-sunrise .atmosphere .atm-clouds-c { opacity: 0.08; }
+body.cond-sunny.theme-cloudy .atmosphere .atm-clouds { opacity: 0.38; }
+body.cond-sunny.theme-cloudy .atmosphere .atm-clouds-b { opacity: 0.2; }
+
+body.cond-partly-cloudy.theme-sunrise .atmosphere .atm-clouds { opacity: 0.45; }
+body.cond-partly-cloudy.theme-sunrise .atmosphere .atm-clouds-b { opacity: 0.28; }
+body.cond-partly-cloudy.theme-cloudy .atmosphere .atm-clouds { opacity: 0.68; }
+body.cond-partly-cloudy.theme-cloudy .atmosphere .atm-clouds-b { opacity: 0.42; }
+body.cond-partly-cloudy.theme-sunset .atmosphere .atm-clouds { opacity: 0.4; }
+
+body.cond-cloudy.theme-sunrise .atmosphere .atm-clouds { opacity: 0.55; }
+body.cond-cloudy.theme-sunrise .atmosphere .atm-clouds-b { opacity: 0.34; }
+body.cond-cloudy.theme-sunrise .atmosphere .atm-haze { opacity: 0.42; }
+body.cond-cloudy.theme-cloudy .atmosphere .atm-clouds { opacity: 0.88; }
+body.cond-cloudy.theme-cloudy .atmosphere .atm-clouds-b { opacity: 0.62; }
+body.cond-cloudy.theme-sunset .atmosphere .atm-clouds { opacity: 0.48; }
+body.cond-cloudy.theme-storm .atmosphere .atm-clouds { opacity: 0.96; }
+body.cond-cloudy.theme-night .atmosphere .atm-clouds { opacity: 0.32; }
+
+body.cond-rain .atmosphere .atm-rain,
+body.cond-heavy-rain .atmosphere .atm-rain,
+body.cond-thunderstorm .atmosphere .atm-rain {
+  opacity: 0.72;
+}
+body.cond-rain .atmosphere .atm-rain .atm-drift,
+body.cond-thunderstorm .atmosphere .atm-rain .atm-drift {
+  animation-duration: 0.8s;
+}
+body.cond-heavy-rain .atmosphere .atm-rain {
+  opacity: 0.9;
+}
+body.cond-heavy-rain .atmosphere .atm-rain .atm-drift {
+  animation-duration: 0.55s;
+  background-image:
+    repeating-linear-gradient(
+      105deg,
+      transparent 0 8px,
+      rgba(90, 140, 185, 0.22) 8px 9px,
+      transparent 9px 20px
+    ),
+    repeating-linear-gradient(
+      112deg,
+      transparent 0 13px,
+      rgba(120, 160, 200, 0.14) 13px 14px,
+      transparent 14px 30px
+    );
+}
+body.cond-rain.theme-cloudy .atmosphere .atm-clouds,
+body.cond-heavy-rain.theme-cloudy .atmosphere .atm-clouds {
+  opacity: 0.92;
+  filter: brightness(0.88);
+}
+body.cond-thunderstorm.theme-cloudy .atmosphere .atm-clouds,
+body.cond-thunderstorm.theme-storm .atmosphere .atm-clouds {
+  filter: brightness(0.78);
+}
+body.cond-extreme-heat.theme-sunrise .atmosphere .atm-orb,
+body.cond-extreme-heat.theme-sunset .atmosphere .atm-orb,
+body.cond-extreme-heat.theme-cloudy .atmosphere .atm-orb {
+  opacity: 0.95;
+}
+body.cond-extreme-heat .atmosphere .atm-orb-aura {
+  opacity: 0.95;
+  background: radial-gradient(
+    circle,
+    rgba(255, 190, 100, 0.5) 0%,
+    rgba(255, 140, 60, 0.18) 45%,
+    transparent 70%
+  );
+}
+body.cond-extreme-heat .atmosphere .atm-haze {
+  opacity: 0.48;
+  background: linear-gradient(180deg, transparent 25%, rgba(255, 215, 150, 0.28) 100%);
+  animation: atm-heat-haze 12s ease-in-out infinite;
+}
+body.cond-extreme-heat .atmosphere .atm-clouds { opacity: 0.18; }
+
+/* Legacy aliases */
+body.atm-sunny:not([class*="theme-"]) .atmosphere .atm-orb { opacity: 0.85; }
+body.atm-rain:not([class*="theme-"]) .atmosphere .atm-rain,
+body.atm-heavy-rain:not([class*="theme-"]) .atmosphere .atm-rain {
+  opacity: 0.75;
+}
+body.atm-thunderstorm:not([class*="theme-"]) .atmosphere .atm-rain { opacity: 0.7; }
+
+/* —— Keyframes (transform / opacity only) —— */
+@keyframes atm-drift-left {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-32%, 0, 0); }
+}
+@keyframes atm-drift-right {
+  from { transform: translate3d(-32%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes atm-sun-rise {
+  from { transform: translate3d(0, 18%, 0) scale(0.92); }
+  to { transform: translate3d(0, -10%, 0) scale(1.06); }
+}
+@keyframes atm-sun-set {
+  from { transform: translate3d(0, -8%, 0) scale(1.04); }
+  to { transform: translate3d(0, 16%, 0) scale(0.9); }
+}
+@keyframes atm-sun-glow {
+  0%, 100% { opacity: 0.82; }
+  50% { opacity: 1; }
+}
+@keyframes atm-moon-glow {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 0.95; }
+}
+@keyframes atm-horizon-pulse {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+@keyframes atm-haze-breathe {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+@keyframes atm-sky-shift {
+  from { filter: brightness(1) saturate(1); }
+  to { filter: brightness(1.04) saturate(1.05); }
+}
+@keyframes atm-heat-haze {
+  0%, 100% { opacity: 0.4; transform: translate3d(0, 0, 0); }
+  50% { opacity: 0.55; transform: translate3d(0, -1.5%, 0); }
+}
+@keyframes atm-rain-fall {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 18px 110px, -12px 140px; }
+}
+@keyframes atm-star-twinkle {
+  0%, 100% { opacity: 0.7; }
+  40% { opacity: 0.95; }
+  70% { opacity: 0.78; }
+}
+@keyframes atm-star-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-2.5%, 1%, 0); }
+}
+@keyframes atm-particle-drift {
+  from { opacity: 0.22; }
+  to { opacity: 0.38; }
+}
+
+@media (max-width: 768px) {
+  .atmosphere .atm-clouds-c,
+  .atmosphere .atm-particles { display: none; }
+  .atmosphere .atm-clouds-b { opacity: 0.28; }
+  .atmosphere .atm-orb {
+    width: 96px;
+    height: 96px;
+  }
+  .atmosphere .atm-clouds .atm-drift { animation-duration: 120s; }
+  .atmosphere .atm-clouds-b .atm-drift { animation-duration: 90s; }
+  .atmosphere .atm-layer { --atm-parallax: 0px !important; }
+  body.theme-storm .atmosphere .atm-rain { opacity: 0.28; }
+  body.cond-rain .atmosphere .atm-rain,
+  body.cond-heavy-rain .atmosphere .atm-rain { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atmosphere .atm-layer,
+  .atmosphere .atm-drift,
+  .atmosphere .atm-orb-body,
+  .atmosphere .atm-orb-aura,
+  .atmosphere .atm-horizon,
+  .atmosphere .atm-haze,
+  .atmosphere .atm-rain .atm-drift,
+  .atmosphere .atm-stars .atm-drift,
+  .atmosphere .atm-storm-glow,
+  .atmosphere .atm-sky,
+  .atmosphere .atm-particles,
+  .atmosphere .atm-lightning {
+    animation: none !important;
+    transition: none !important;
+  }
+  .atmosphere .atm-layer,
+  .atmosphere .atm-drift {
+    transform: none !important;
+  }
+  .atmosphere .atm-lightning.is-flash {
+    opacity: 0 !important;
+  }
+  body.reduced-motion .atmosphere {
+    --atm-scroll: 0;
+  }
+}

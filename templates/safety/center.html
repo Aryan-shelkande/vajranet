@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Disaster preparedness</h1>
+  <p>Practical safety steps for citizens. Based on widely published emergency-management guidance — not a substitute for official instructions.</p>
+</section>
+
+<article class="panel section">
+  <h2>Emergency kit checklist</h2>
+  <p class="kit-progress" id="kit-progress">0 / {{ kit_items|length }} items ready</p>
+  <div class="kit-grid">
+    {% for item in kit_items %}
+      <div class="kit-item" data-kit-item="{{ item.slug }}">
+        <label><input type="checkbox"> <strong>{{ item.name }}</strong></label>
+        <div class="meta">{{ item.description }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</article>
+
+<div class="safety-grid section">
+  {% for g in guidelines %}
+    <a class="safety-tile" href="#{{ g.slug }}"><span aria-hidden="true">◎</span>{{ g.title }}<small>Open guide</small></a>
+  {% endfor %}
+</div>
+
+{% for g in guidelines %}
+<article class="panel section" id="{{ g.slug }}">
+  <h2>{{ g.title }}</h2>
+  <p>{{ g.summary }}</p>
+  <ul class="factor-list">
+    {% for step in g.instructions %}
+      <li>• {{ step }}</li>
+    {% endfor %}
+  </ul>
+  {% if g.official_sources %}
+  <p class="meta">Sources:
+    {% for s in g.official_sources %}
+      <a href="{{ s.url }}" target="_blank" rel="noopener">{{ s.name }}</a>{% if not forloop.last %} · {% endif %}
+    {% endfor %}
+  </p>
+  {% endif %}
+</article>
+{% endfor %}
+{% endblock %}

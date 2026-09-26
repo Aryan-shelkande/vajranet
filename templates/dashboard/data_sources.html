@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Data sources</h1>
+  <p>Free API ≠ unlimited production API ≠ government operational service. Status below reflects development/demo suitability and current configuration — not MoES operational certification.</p>
+</section>
+
+<article class="panel section">
+  <div style="overflow:auto">
+    <table class="table" aria-label="Free data source registry">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Provider</th>
+          <th>Status</th>
+          <th>API key</th>
+          <th>Usage</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Weather</td>
+          <td>Open-Meteo</td>
+          <td><span class="badge live">Available</span></td>
+          <td>No</td>
+          <td>Development / evaluation</td>
+        </tr>
+        <tr>
+          <td>Geocoding</td>
+          <td>Open-Meteo</td>
+          <td><span class="badge live">Available</span></td>
+          <td>No</td>
+          <td>Development / evaluation</td>
+        </tr>
+        <tr>
+          <td>Map</td>
+          <td>OpenFreeMap</td>
+          <td><span class="badge live">Available</span></td>
+          <td>No</td>
+          <td>Public map styles</td>
+        </tr>
+        <tr>
+          <td>Earthquakes</td>
+          <td>USGS</td>
+          <td><span class="badge live">Available</span></td>
+          <td>No</td>
+          <td>Observed catalog</td>
+        </tr>
+        <tr>
+          <td>Radar</td>
+          <td>RainViewer</td>
+          <td><span class="badge live">Available</span></td>
+          <td>No</td>
+          <td>Development (not IMD)</td>
+        </tr>
+        <tr>
+          <td>Lightning</td>
+          <td>—</td>
+          <td><span class="badge unavailable">Unavailable</span></td>
+          <td>—</td>
+          <td>Provider needed</td>
+        </tr>
+        <tr>
+          <td>Wildfires</td>
+          <td>NASA FIRMS</td>
+          <td><span class="badge model">Requires key</span></td>
+          <td>Yes</td>
+          <td>Optional</td>
+        </tr>
+        <tr>
+          <td>Official alerts</td>
+          <td>NDMA / authoritative feed</td>
+          <td><span class="badge">Planned</span></td>
+          <td>—</td>
+          <td>Integration pending</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="meta" style="margin-top:1rem">
+    Attribution examples: Weather data © Open-Meteo · Map: OpenFreeMap © OpenMapTiles Data from OpenStreetMap · Earthquakes: USGS · Radar: RainViewer
+  </p>
+</article>
+
+<section class="page-hero" style="padding-top:0.5rem">
+  <h2 style="font-family:var(--display);font-size:1.25rem;margin:0">Configured integrations</h2>
+  <p>Detailed notes for each seeded provider record.</p>
+</section>
+<div class="grid grid-2 section">
+{% for s in sources %}
+  <article class="panel">
+    <h2>{{ s.name }}</h2>
+    <div class="meta">
+      {% if s.status == "available" %}<span class="badge live">Available</span>
+      {% elif s.status == "requires_key" %}<span class="badge model">Requires key</span>
+      {% elif s.status == "unavailable" %}<span class="badge unavailable">Unavailable</span>
+      {% else %}<span class="badge">Planned</span>{% endif %}
+    </div>
+    <p><strong>Type:</strong> {{ s.data_type }}</p>
+    <p><strong>Update:</strong> {{ s.update_frequency|default:"—" }}</p>
+    <p><strong>Coverage:</strong> {{ s.coverage|default:"—" }}</p>
+    <p>{{ s.attribution }}</p>
+    {% if s.notes %}<p class="meta">{{ s.notes }}</p>{% endif %}
+    <p class="meta">
+      {% if s.homepage_url %}<a href="{{ s.homepage_url }}" target="_blank" rel="noopener">Homepage</a>{% endif %}
+      {% if s.docs_url %} · <a href="{{ s.docs_url }}" target="_blank" rel="noopener">Docs</a>{% endif %}
+    </p>
+  </article>
+{% empty %}
+  <div class="empty">Run <code>python manage.py seed_platform</code> to populate data sources.</div>
+{% endfor %}
+</div>
+{% endblock %}

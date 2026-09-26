@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ page_title|default:PLATFORM_NAME }}{% endblock %} · {{ PLATFORM_NAME }}</title>
+  <meta name="description" content="{% block meta_description %}India-focused atmospheric and disaster intelligence for weather, thunderstorms, rainfall, alerts, and preparedness.{% endblock %}">
+  <meta property="og:title" content="{{ PLATFORM_NAME }} — {{ PLATFORM_SUBTITLE }}">
+  <meta property="og:description" content="Monitor weather, thunderstorms, rainfall, and hazards across India.">
+  <meta property="og:type" content="website">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/atmosphere.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body
+  class="theme-{{ page_theme|default:'sunrise' }} cond-{{ atmosphere|default:'partly-cloudy' }} {% block body_class %}{% endblock %}"
+  data-page-theme="{{ page_theme|default:'sunrise' }}"
+  data-atmosphere="{{ atmosphere|default:'partly-cloudy' }}"
+  data-intensity="{{ atm_intensity|default:'medium' }}"
+>
+  <div class="atmosphere" id="atmospheric-background" aria-hidden="true">
+    <div class="atm-layer atm-sky"></div>
+    <div class="atm-layer atm-horizon"></div>
+    <div class="atm-layer atm-orb">
+      <div class="atm-drift atm-orb-body"></div>
+      <div class="atm-orb-aura"></div>
+    </div>
+    <div class="atm-layer atm-moon"><div class="atm-drift"></div></div>
+    <div class="atm-layer atm-clouds"><div class="atm-drift"></div></div>
+    <div class="atm-layer atm-clouds-b"><div class="atm-drift"></div></div>
+    <div class="atm-layer atm-clouds-c"><div class="atm-drift"></div></div>
+    <div class="atm-layer atm-haze"></div>
+    <div class="atm-layer atm-rain"><div class="atm-drift"></div></div>
+    <div class="atm-layer atm-storm-glow"></div>
+    <div class="atm-layer atm-lightning"></div>
+    <div class="atm-layer atm-stars"><div class="atm-drift"></div></div>
+    <div class="atm-layer atm-particles"></div>
+  </div>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{% url 'home' %}">
+        <span class="brand-mark" aria-hidden="true">⚡</span>
+        <span>
+          <strong>{{ PLATFORM_NAME }}</strong>
+          <small>India Atmospheric Intelligence</small>
+        </span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav" id="primary-nav" aria-label="Primary">
+        <a href="{% url 'home' %}">Overview</a>
+        <a href="{% url 'nowcasting' %}">Nowcast</a>
+        <a href="{% url 'weather' %}">Weather</a>
+        <a href="{% url 'radar' %}">Radar</a>
+        <a href="{% url 'alerts' %}">Alerts</a>
+        <a href="{% url 'safety' %}">Safety</a>
+        <a href="{% url 'monitoring' %}">Monitoring</a>
+        <a href="{% url 'data-sources' %}">Sources</a>
+      </nav>
+      <div class="header-meta">
+        <time id="clock" datetime=""></time>
+        <a class="status-pill" id="alert-pill" href="{% url 'alerts' %}">Alerts</a>
+        <button type="button" class="ai-launch" id="ai-launch-header" aria-controls="vajra-ai-panel">Vajra AI</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="site-main">
+    <div class="container">
+      {% if messages %}
+        <ul class="flash-list" style="list-style:none;padding:1rem 0 0;margin:0">
+          {% for message in messages %}
+            <li class="flash panel" style="margin-bottom:0.5rem">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p class="disclaimer">{{ DISCLAIMER }}</p>
+      <p class="footer-links">
+        Official references:
+        <a href="https://mausam.imd.gov.in/" rel="noopener" target="_blank">IMD Mausam</a> ·
+        <a href="https://sachet.ndma.gov.in/" rel="noopener" target="_blank">NDMA SACHET</a> ·
+        <a href="https://open-meteo.com/" rel="noopener" target="_blank">Open-Meteo</a>
+      </p>
+    </div>
+  </footer>
+
+  <button type="button" class="ai-fab" id="ai-fab" aria-controls="vajra-ai-panel" aria-expanded="false" aria-label="Open Vajra AI">⚡</button>
+  <aside class="ai-panel" id="vajra-ai-panel" role="dialog" aria-label="Vajra AI assistant" aria-hidden="true">
+    <header>
+      <div>
+        <strong>Vajra AI</strong>
+        <small>Your atmospheric safety assistant</small>
+      </div>
+      <button type="button" class="ai-close" id="ai-close" aria-label="Close assistant">×</button>
+    </header>
+    <p class="ai-mode" id="ai-mode-label">{% if AI_LLM_READY %}Vajra AI — AI model enabled{% else %}Platform Assistant{% endif %}</p>
+    <div class="ai-messages" id="ai-messages" aria-live="polite">
+      <div class="ai-bubble">How can I help with weather and safety across India?</div>
+    </div>
+    <div class="ai-suggestions">
+      <button type="button" data-ai-prompt="Is it safe to go outside?">Is it safe outside?</button>
+      <button type="button" data-ai-prompt="What is the weather right now?">Current weather</button>
+      <button type="button" data-ai-prompt="Explain the active alerts">Explain this alert</button>
+      <button type="button" data-ai-prompt="Lightning safety tips">Lightning safety</button>
+    </div>
+    <form class="ai-form" id="ai-form">
+      <label class="visually-hidden" for="ai-input" style="position:absolute;left:-9999px">Ask Vajra AI</label>
+      <input id="ai-input" name="question" type="text" maxlength="500" placeholder="Ask Vajra AI..." autocomplete="off" required>
+      <button type="submit">Ask</button>
+    </form>
+  </aside>
+
+  <script>
+    window.VAJRANET_CONFIG = {
+      mapStyleUrl: "{{ MAP_TILE_STYLE_URL|escapejs }}",
+      mapAttribution: "{{ MAP_TILE_ATTRIBUTION|escapejs }}",
+      mapMaxZoom: {{ MAP_TILE_MAX_ZOOM|default:18 }},
+      aiLlmReady: {{ AI_LLM_READY|yesno:"true,false" }},
+      nasaFirmsConfigured: {{ NASA_FIRMS_CONFIGURED|yesno:"true,false" }},
+      csrfToken: document.querySelector('meta[name="csrf-token"]').content
+    };
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

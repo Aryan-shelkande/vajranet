@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Weather alerts</h1>
+  <p>Platform-derived estimates for situational awareness. Official warnings come from IMD and NDMA.</p>
+  <form class="search-bar" method="get" style="max-width:520px">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input name="city" value="{{ city }}" aria-label="City">
+    <button type="submit">Refresh</button>
+  </form>
+</section>
+<article class="panel section">
+  <p class="meta">{{ payload.note }}</p>
+  {% for a in payload.alerts %}
+    <div class="alert-item {{ a.severity }}">
+      <strong>⚠ {{ a.title }}</strong>
+      <span>{{ a.area_name }} · {{ a.severity|upper }}
+        {% if a.data_kind == "derived_risk" or a.origin == "derived" %}
+          · <span class="badge derived">Derived risk</span>
+        {% else %}
+          · {{ a.data_kind|default:a.origin }}
+        {% endif %}
+      </span>
+      <span>{{ a.description }}</span>
+      <span><em>Recommended action:</em> {{ a.recommended_action }}</span>
+      <span class="meta">Source: {{ a.source }}</span>
+    </div>
+  {% empty %}
+    <div class="empty">No active derived alerts.</div>
+  {% endfor %}
+</article>
+{% endblock %}

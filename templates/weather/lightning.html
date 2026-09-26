@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Lightning monitoring</h1>
+  <p>Strike observations are shown only when a legitimate redistributable data source is configured.</p>
+</section>
+<article class="panel section">
+  {% if lightning.available %}
+    <div class="meta"><span class="badge live">Observed</span> {{ lightning.source }} · last {{ lightning.window_minutes }} min · {{ lightning.count }} strikes</div>
+    <div id="india-map" class="map-frame" role="region" aria-label="Lightning map"></div>
+  {% else %}
+    <div class="empty">
+      <span class="badge unavailable">Unavailable</span>
+      <h2 style="margin-top:0.75rem;font-family:var(--display)">Lightning data</h2>
+      <p><strong>Currently unavailable</strong></p>
+      <p>No suitable free redistributable live lightning feed is configured.</p>
+      <p class="meta">{{ lightning.message }}</p>
+      <p class="meta">Provider adapter is ready for future Blitzortung participant credentials, subject to their terms.</p>
+    </div>
+  {% endif %}
+</article>
+{% endblock %}
+{% block extra_js %}
+{% if lightning.available %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.VajraNet) VajraNet.createLightMap('india-map');
+});
+</script>
+{% endif %}
+{% endblock %}

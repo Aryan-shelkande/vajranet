@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero-weather" id="overview">
+  <p class="hero-kicker" id="hero-greeting-label">Atmospheric conditions</p>
+  <h1 class="hero-greeting" id="hero-greeting">Good day, India</h1>
+  <p class="hero-sub">Live conditions, baseline nowcasts, and preparedness guidance — clearly labeled as forecast, model estimate, or derived risk.</p>
+
+  <div class="search-wrap" id="city-search">
+    <form class="search-bar" action="{% url 'home' %}" method="get" role="search" id="city-search-form">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input type="search" name="city" id="city-input" value="{{ city }}" placeholder="Search city or district" aria-label="Search city or district" aria-autocomplete="list" aria-controls="city-results" autocomplete="off" required>
+      <input type="hidden" name="view" value="{{ view_mode }}">
+      <button type="submit">Monitor</button>
+    </form>
+    <div class="search-results" id="city-results" role="listbox" aria-label="City suggestions"></div>
+  </div>
+
+  <div class="chip-row" id="featured-chips">
+    {% for loc in featured %}
+      <a class="chip{% if loc.name|lower == city|lower %} active{% endif %}" href="?city={{ loc.name|urlencode }}&view={{ view_mode }}" data-city="{{ loc.name }}">{{ loc.name }}</a>
+    {% endfor %}
+  </div>
+  <div class="chip-row">
+    <a class="chip{% if view_mode == 'citizen' %} active{% endif %}" href="?city={{ city|urlencode }}&view=citizen">Citizen view</a>
+    <a class="chip{% if view_mode == 'monitoring' %} active{% endif %}" href="?city={{ city|urlencode }}&view=monitoring">Monitoring view</a>
+  </div>
+</section>
+
+{% if error %}
+  <div class="error-banner section" id="weather-error">
+    Weather data temporarily unavailable
+    <div class="meta" style="margin:0.35rem 0 0;color:inherit">{{ error }}</div>
+    <button type="button" class="btn secondary" style="margin-top:0.75rem" onclick="location.reload()">Retry</button>
+  </div>
+{% endif %}
+
+<div id="dashboard-live">
+{% if current %}
+<section class="condition-layout section" id="condition-section">
+  <article class="panel condition-card" id="condition-card">
+    <div class="meta" id="condition-meta">
+      {% if current.stale %}<span class="badge unavailable">Cached / stale</span>
+      {% else %}<span class="badge forecast">{{ current.data_kind|upper }}</span>{% endif %}
+      Source: {{ current.source }} · <span id="condition-observed">{{ current.observed_at }}</span> {{ current.timezone|default:"Asia/Kolkata" }}
+      {% if current.from_cache %} · cached{% endif %}
+    </div>
+    <div class="meta" id="condition-place" style="margin-bottom:0.2rem;font-weight:700;color:var(--text-2)">
+      {{ current.location.name }}{% if current.location.state %}, {{ current.location.state }}{% endif %}
+    </div>
+    <div class="condition-temp" id="condition-temp">{{ current.temperature_c|floatformat:0 }}°</div>
+    <p class="condition-desc" id="condition-desc">{{ current.weather_description }}</p>
+    <p class="condition-feels" id="condition-feels">Feels like {{ current.feels_like_c|floatformat:0 }}°</p>
+    <svg class="wx-icon" id="wx-icon" viewBox="0 0 72 72" aria-hidden="true"></svg>
+    <div class="metrics-row" id="condition-metrics">
+      <div class="stat"><strong id="m-humidity">{{ current.humidity_pct|floatformat:0 }}%</strong><span>Humidity</span></div>
+      <div class="stat"><strong id="m-wind">{{ current.wind_speed_kmh|floatformat:0 }} km/h</strong><span>Wind</span></div>
+      <div class="stat"><strong id="m-pressure">{{ current.pressure_hpa|floatformat:0 }} hPa</strong><span>Pressure</span></div>
+      <div class="stat"><strong id="m-rain">{{ current.rainfall_mm|default:0 }} mm</strong><span>Rain</span></div>
+    </div>
+  </article>
+
+  <article class="panel" id="nowcast-card">
+    <div class="meta"><span class="badge model">Baseline nowcast · Derived risk</span></div>
+    <h2>Thunderstorm nowcast</h2>
+    {% if nowcast %}
+      <div class="meta" id="nowcast-place">{{ nowcast.location.name }} · Next 60 minutes</div>
+      <div class="risk-hero">
+        <div>
+          <div class="risk-level {{ nowcast.risk_level }}" id="nowcast-level">{{ nowcast.risk_level }}</div>
+          <p class="meta" id="nowcast-label" style="margin:0">{{ nowcast.label }} · Score <span id="nowcast-score">{{ nowcast.risk_score }}</span>/100</p>
+        </div>
+      </div>
+      <div class="risk-meter" aria-hidden="true"><span id="nowcast-meter" style="width:{{ nowcast.risk_score }}%"></span></div>
+      <p class="meta">Why?</p>
+      <ul class="factor-list" id="nowcast-factors">
+        {% for f in nowcast.factors|slice:":5" %}
+          <li>• {{ f.name }} — {{ f.signal }}{% if f.value %} ({{ f.value }}){% endif %}</li>
+        {% empty %}
+          <li>• Factors unavailable for this assessment</li>
+        {% endfor %}
+      </ul>
+      <p class="meta" id="nowcast-updated">Model: Baseline / Derived risk · Updated {{ nowcast.observed_at }} {{ nowcast.timezone }}</p>
+      <p class="meta">Not an official warning · Not an AI prediction</p>
+    {% else %}
+      <div class="empty">Nowcast unavailable for this location.</div>
+    {% endif %}
+  </article>
+</section>
+
+<section class="section panel" id="alerts-section">
+  <h2>Active alerts</h2>
+  <p class="meta" id="alert-note">{{ alert_note }}</p>
+  <div id="alerts-list">
+  {% if alerts %}
+    {% for a in alerts %}
+      <div class="alert-item {{ a.severity }}">
+        <strong>⚠ {{ a.title }}</strong>
+        <span>{{ a.area_name }} · {{ a.severity|upper }}
+          {% if a.data_kind == "derived_risk" or a.origin == "derived" %}
+            · <span class="badge derived">Derived risk</span>
+          {% else %}
+            · {{ a.data_kind|default:a.origin }}
+          {% endif %}
+        </span>
+        <span>{{ a.description }}</span>
+        {% if a.recommended_action %}<span><em>Action:</em> {{ a.recommended_action }}</span>{% endif %}
+        {% if a.source %}<span class="meta">Source: {{ a.source }}</span>{% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">No derived alerts for this location right now.</div>
+  {% endif %}
+  </div>
+</section>
+{% endif %}
+
+<section class="section">
+  <h2 style="font-family:var(--display);font-size:1.15rem;margin:0 0 0.75rem">India atmospheric overview</h2>
+  <div class="grid grid-4" id="india-overview">
+    <div class="stat">
+      <strong>{% if overview.temperature_c %}{{ overview.temperature_c }}°C{% else %}—{% endif %}</strong>
+      <span>Temperature</span>
+      <span class="trend">Featured cities avg</span>
+    </div>
+    <div class="stat">
+      <strong>{% if overview.rainfall_mm != None %}{{ overview.rainfall_mm }} mm{% else %}—{% endif %}</strong>
+      <span>Rainfall</span>
+      <span class="trend">Current precip</span>
+    </div>
+    <div class="stat">
+      <strong>{% if overview.wind_speed_kmh %}{{ overview.wind_speed_kmh }} km/h{% else %}—{% endif %}</strong>
+      <span>Wind</span>
+      <span class="trend">Average</span>
+    </div>
+    <div class="stat">
+      <strong>{% if overview.humidity_pct %}{{ overview.humidity_pct }}%{% else %}—{% endif %}</strong>
+      <span>Humidity</span>
+      <span class="trend">{% if overview.cities %}{{ overview.cities }} cities{% else %}—{% endif %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="panel map-panel section" id="map-section">
+  <h2>India weather map</h2>
+  <p class="meta">Basemap: OpenFreeMap Liberty (no API key). City markers use Open-Meteo forecast fields (model analysis, not station observations). Earthquakes are USGS observed events. Radar mosaics are RainViewer — not an official IMD operational radar product.</p>
+  <div class="layer-controls" id="layer-controls">
+    <label><input type="checkbox" data-layer="temperature" checked> Temperature</label>
+    <label><input type="checkbox" data-layer="rainfall" checked> Rainfall</label>
+    <label><input type="checkbox" data-layer="earthquakes" checked> Earthquakes <span class="layer-note">USGS observed</span></label>
+    <label><input type="checkbox" data-layer="radar"> Radar <span class="layer-note">RainViewer</span></label>
+    <label class="is-disabled" title="No suitable free redistributable live lightning feed is configured">
+      <input type="checkbox" data-layer="lightning" disabled> Lightning <span class="layer-note">Unavailable</span>
+    </label>
+    <label class="is-disabled" title="Requires NASA FIRMS MAP_KEY">
+      <input type="checkbox" data-layer="wildfires" disabled> Wildfires
+      <span class="layer-note">{% if NASA_FIRMS_CONFIGURED %}Ready{% else %}Data source requires configuration{% endif %}</span>
+    </label>
+  </div>
+  <p class="meta" id="radar-status" aria-live="polite"></p>
+  <div id="india-map" class="map-frame" role="region" aria-label="India weather map"></div>
+  <div class="map-error" id="map-error" role="alert">Map temporarily unavailable. Please retry.</div>
+  <div class="map-legend" aria-label="Map legend">
+    <div class="legend-item"><span class="legend-swatch temp"></span> Temperature markers (°C)</div>
+    <div class="legend-item"><span class="legend-swatch rain"></span> Rainfall intensity</div>
+    <div class="legend-item"><span class="legend-swatch quake"></span> Earthquakes (USGS observed)</div>
+    <div class="legend-item"><span class="legend-swatch radar"></span> Radar mosaic (RainViewer)</div>
+  </div>
+</section>
+
+{% if hourly %}
+<section class="grid grid-2 section" id="forecast-section">
+  <article class="panel">
+    <h2>Hourly forecast <span class="badge forecast">Forecast</span></h2>
+    <div class="forecast-scroll" id="hourly-strip">
+      {% for h in hourly|slice:":12" %}
+        <div class="hour-card">
+          <div class="t">{% if forloop.first %}Now{% else %}{{ h.time|slice:"11:16" }}{% endif %}</div>
+          <div class="icon">{% if h.thunderstorm_hint %}⛈{% elif h.precipitation_mm and h.precipitation_mm > 0 %}🌧{% else %}☁{% endif %}</div>
+          <strong>{{ h.temperature_c|floatformat:0 }}°</strong>
+          <div class="t">{{ h.precipitation_probability_pct|default:"—" }}%</div>
+        </div>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="panel">
+    <h2>7-day outlook <span class="badge forecast">Forecast</span></h2>
+    <div class="forecast-scroll" id="daily-strip">
+      {% for d in daily %}
+        <div class="day-card">
+          <div class="t">{{ d.time }}</div>
+          <div class="icon">🌤</div>
+          <strong>{{ d.temperature_max_c|floatformat:0 }}° / {{ d.temperature_min_c|floatformat:0 }}°</strong>
+          <div class="t">{{ d.precipitation_mm|default:0 }} mm</div>
+        </div>
+      {% endfor %}
+    </div>
+    <canvas id="temp-chart" height="140" aria-label="Temperature chart" style="margin-top:0.75rem"></canvas>
+  </article>
+</section>
+{% endif %}
+
+{% if view_mode == "monitoring" and current %}
+<section class="panel section">
+  <h2>Atmospheric detail <span class="badge model">Monitoring view</span></h2>
+  <div class="grid grid-4">
+    <div class="stat"><strong>{{ current.cloud_cover_pct|floatformat:0 }}%</strong><span>Cloud cover</span></div>
+    <div class="stat"><strong>{{ current.visibility_km|floatformat:1 }} km</strong><span>Visibility</span></div>
+    <div class="stat"><strong>{{ current.cape_jkg|default:"—" }}</strong><span>CAPE (J/kg)</span></div>
+    <div class="stat"><strong>{{ current.lifted_index|default:"—" }}</strong><span>Lifted index</span></div>
+  </div>
+</section>
+{% endif %}
+</div>
+
+<section class="panel section" id="safety-preview">
+  <h2>Safety center</h2>
+  <p class="meta">Concise preparedness guides for common hazards across India.</p>
+  <div class="safety-grid">
+    <a class="safety-tile" href="{% url 'safety' %}#lightning"><span>⚡</span>Lightning<small>Seek shelter</small></a>
+    <a class="safety-tile" href="{% url 'safety' %}#flood"><span>🌧</span>Flood<small>Move to higher ground</small></a>
+    <a class="safety-tile" href="{% url 'safety' %}#cyclone"><span>🌪</span>Cyclone<small>Secure and evacuate early</small></a>
+    <a class="safety-tile" href="{% url 'safety' %}#wildfire"><span>🔥</span>Wildfire<small>Avoid smoke corridors</small></a>
+    <a class="safety-tile" href="{% url 'safety' %}#heatwave"><span>🌡</span>Heatwave<small>Hydrate, limit exposure</small></a>
+    <a class="safety-tile" href="{% url 'safety' %}#earthquake"><span>🌎</span>Earthquake<small>Drop, cover, hold</small></a>
+    <a class="safety-tile" href="{% url 'safety' %}#hailstorm"><span>🧊</span>Hailstorm<small>Protect glass and head</small></a>
+    <a class="safety-tile" href="{% url 'safety' %}#thunderstorm"><span>⛈</span>Thunderstorm<small>Stay indoors</small></a>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.VAJRANET_CITY = "{{ city|escapejs }}";
+  window.VAJRANET_VIEW = "{{ view_mode|escapejs }}";
+  window.VAJRANET_WEATHER = {{ current_json|default:"null"|safe }};
+  window.VAJRANET_NOWCAST = {{ nowcast_json|default:"null"|safe }};
+  window.VAJRANET_ALERTS = {{ alerts_json|default:"[]"|safe }};
+  window.VAJRANET_DAILY = [
+    {% for d in daily %}
+      { time: "{{ d.time }}", min: {{ d.temperature_min_c|default:"null" }}, max: {{ d.temperature_max_c|default:"null" }} }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!window.VajraNet) return;
+    VajraNet.setGreeting();
+    VajraNet.applyAtmosphereFromWeather(window.VAJRANET_WEATHER, window.VAJRANET_NOWCAST);
+    VajraNet.renderWeatherIcon(window.VAJRANET_WEATHER);
+    VajraNet.initCitySearch();
+    VajraNet.initHomeMap();
+    VajraNet.initTempChart(window.VAJRANET_DAILY);
+  });
+</script>
+{% endblock %}
