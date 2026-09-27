@@ -41,15 +41,21 @@ class AIAssistant:
     """Answer user questions using optional LLM + platform context."""
 
     def answer(
-        self, question: str, context: dict[str, Any] | None = None
+        self,
+        question: str,
+        context: dict[str, Any] | None = None,
+        language: str = "en",
     ) -> dict[str, Any]:
         question = (question or "").strip()
         context = context or {}
+        if language not in {"en", "hi", "mr"}:
+            language = "en"
         if not question:
             return {
                 "answer": "Ask about weather, alerts, nowcast risk, or safety for a city.",
                 "mode": "platform",
                 "provider": "platform",
+                "language": language,
                 "label": "Platform Assistant",
                 "disclaimer": SAFETY_DISCLAIMER,
             }
@@ -59,17 +65,18 @@ class AIAssistant:
 
         if provider == "openai" and api_key:
             try:
-                llm_answer = self._openai_answer(question, context, api_key)
+                llm_answer = self._openai_answer(question, context, api_key, language)
                 return {
                     "answer": llm_answer,
                     "mode": "llm",
                     "provider": "openai",
+                    "language": language,
                     "label": "Vajra AI — AI model enabled",
                     "disclaimer": SAFETY_DISCLAIMER,
                 }
             except Exception as exc:  # noqa: BLE001 — graceful degrade
                 logger.warning("AI provider failed: %s", exc)
-                fallback = self._platform_answer(question, context)
+                fallback = self._platform_answer(question, context, language=language)
                 fallback["provider_error"] = (
                     "AI assistant unavailable — showing platform guidance"
                 )
@@ -77,30 +84,33 @@ class AIAssistant:
 
         if provider == "ollama":
             try:
-                llm_answer = self._ollama_answer(question, context)
+                llm_answer = self._ollama_answer(question, context, language)
                 return {
                     "answer": llm_answer,
                     "mode": "llm",
                     "provider": "ollama",
+                    "language": language,
                     "label": "Vajra AI — local model enabled",
                     "disclaimer": SAFETY_DISCLAIMER,
                 }
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Ollama provider failed: %s", exc)
-                fallback = self._platform_answer(question, context)
+                fallback = self._platform_answer(question, context, language=language)
                 fallback["provider_error"] = (
                     "Local AI unavailable — showing platform guidance"
                 )
                 return fallback
 
-        result = self._platform_answer(question, context)
+        result = self._platform_answer(question, context, language=language)
         if provider == "openai" and not api_key:
             result["provider_error"] = (
                 "AI assistant unavailable — showing platform guidance"
             )
         return result
 
-    def _ollama_answer(self, question: str, context: dict[str, Any]) -> str:
+    def _ollama_answer(
+        self, question: str, context: dict[str, Any], language: str
+    ) -> str:
         base = (
             getattr(settings, "OLLAMA_BASE_URL", "http://127.0.0.1:11434") or ""
         ).rstrip("/")
@@ -115,6 +125,7 @@ class AIAssistant:
                     "role": "user",
                     "content": (
                         f"Platform context:\n{self._format_context(context)}\n\n"
+                        f"Reply language: {language}.\n"
                         f"User question: {question}"
                     ),
                 },
@@ -130,7 +141,7 @@ class AIAssistant:
         return text
 
     def _openai_answer(
-        self, question: str, context: dict[str, Any], api_key: str
+        self, question: str, context: dict[str, Any], api_key: str, language: str
     ) -> str:
         model = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini") or "gpt-4o-mini"
         timeout = float(getattr(settings, "HTTP_TIMEOUT_SECONDS", 15.0))
@@ -144,6 +155,7 @@ class AIAssistant:
                     "content": (
                         f"Platform context (JSON-like summary):\n"
                         f"{self._format_context(context)}\n\n"
+                        f"Reply language: {language}.\n"
                         f"User question: {question}"
                     ),
                 },
@@ -168,8 +180,21 @@ class AIAssistant:
         return text
 
     def _platform_answer(
-        self, question: str, context: dict[str, Any]
+        self, question: str, context: dict[str, Any], language: str = "en"
     ) -> dict[str, Any]:
+        from weather.services.messages import localized_answer
+
+        if language in {"hi", "mr"}:
+            text = localized_answer(question, context, language)
+            if text:
+                return {
+                    "answer": text,
+                    "mode": "platform",
+                    "provider": "platform",
+                    "language": language,
+                    "label": "Platform Assistant",
+                    "disclaimer": SAFETY_DISCLAIMER,
+                }
         q = question.lower()
         city = (
             context.get("city")
@@ -224,7 +249,12 @@ class AIAssistant:
                 f"{f' with humidity {humidity:.0f}%' if isinstance(humidity, (int, float)) else ''}."
                 f" Condition: {desc}."
             )
-        elif any(k in q for k in ("temp", "heat", "hot", "cold", "weather")):
+        elif any(
+            k in q for k in ("temp", "heat", "hot", "cold", "weather")
+        ) and not any(
+            k in q
+            for k in ("risk", "radar", "3 hour", "three hour", "next 3", "this evening")
+        ):
             feels = weather.get("feels_like_c")
             lines.append(
                 f"Weather in {city}: {temp if temp is not None else '—'}°C"
@@ -264,6 +294,41 @@ class AIAssistant:
                     "In emergencies, follow local authority instructions."
                 )
             )
+        elif any(k in q for k in ("radar",)):
+            radar = context.get("radar_status") or "unavailable"
+            note = context.get("radar_note") or ""
+            if radar == "available":
+                lines.append(
+                    f"Radar for {city}: a mosaic is available ({note or 'RainViewer'}). "
+                    "This is observed radar imagery, not an official IMD product, "
+                    "and it is not a measured local trend unless a note says so."
+                )
+            else:
+                lines.append(
+                    f"Radar observations for {city} are unavailable in the current "
+                    "platform response. Nothing is inferred in their place."
+                )
+        elif any(
+            k in q
+            for k in ("next 3", "3 hour", "three hour", "next 60", "this evening")
+        ):
+            windows = context.get("windows") or {}
+            horizon = (
+                windows.get("next_3_hours") or windows.get("next_60_minutes") or {}
+            )
+            if horizon.get("available"):
+                lines.append(
+                    f"Model estimate for {city}, {horizon.get('label', 'the short range')}: "
+                    f"rain probability {horizon.get('precipitation_probability_pct', 'unavailable')}%, "
+                    f"thunderstorm risk {horizon.get('thunderstorm_risk_pct', 'unavailable')}% "
+                    f"({horizon.get('thunderstorm_level', 'unavailable')}). "
+                    f"Expected window: {horizon.get('expected_window') or 'unavailable'}. "
+                    "This is an experimental model estimate, not a guarantee."
+                )
+            else:
+                lines.append(
+                    f"A short-range nowcast window for {city} is unavailable from current data."
+                )
         elif any(k in q for k in ("nowcast", "risk", "storm")):
             factors = nowcast.get("factors") or []
             factor_bits = ", ".join(
@@ -277,6 +342,9 @@ class AIAssistant:
                 + ". This is a derived model estimate, not an official warning."
                 + (f" Factors: {factor_bits}." if factor_bits else "")
             )
+            why = (context.get("risk") or {}).get("why")
+            if why:
+                lines.append(str(why))
         else:
             lines.append(
                 f"Platform snapshot for {city}: {temp if temp is not None else '—'}°C, "
@@ -290,6 +358,7 @@ class AIAssistant:
             "answer": " ".join(lines),
             "mode": "platform",
             "provider": "platform",
+            "language": language,
             "label": "Platform Assistant",
             "disclaimer": SAFETY_DISCLAIMER,
         }
@@ -347,7 +416,15 @@ class AIAssistant:
                 f"kind={nowcast.get('data_kind', 'model_estimate')})"
             ),
             f"Lightning data: {context.get('lightning_status', 'unavailable')}",
+            f"Radar: {context.get('radar_status', 'unavailable')}",
         ]
+        risk = context.get("risk") or {}
+        if risk:
+            parts.append(
+                f"Multi-hazard model estimate: {risk.get('overall_level', 'n/a')} "
+                f"({risk.get('label', 'VAJRANET MODEL ESTIMATE')}). "
+                f"Why: {risk.get('why', 'n/a')}"
+            )
         if alerts:
             alert_txt = "; ".join(
                 f"{a.get('title')} [{a.get('severity')}/{a.get('data_kind') or a.get('origin')}]"
@@ -415,6 +492,41 @@ def sanitize_ai_context(raw: dict[str, Any] | None) -> dict[str, Any]:
             "data_kind": str(nowcast.get("data_kind") or "")[:60],
             "factors": clean_factors,
         }
+    windows = raw.get("windows")
+    if isinstance(windows, dict):
+        clean_windows = {}
+        for key in ("next_60_minutes", "next_3_hours"):
+            item = windows.get(key)
+            if isinstance(item, dict):
+                clean_windows[key] = {
+                    "label": str(item.get("label") or "")[:80],
+                    "available": bool(item.get("available")),
+                    "precipitation_probability_pct": item.get(
+                        "precipitation_probability_pct"
+                    ),
+                    "thunderstorm_risk_pct": item.get("thunderstorm_risk_pct"),
+                    "thunderstorm_level": str(item.get("thunderstorm_level") or "")[
+                        :20
+                    ],
+                    "expected_window": str(item.get("expected_window") or "")[:40],
+                    "data_kind": str(item.get("data_kind") or "")[:40],
+                }
+        if clean_windows:
+            out["windows"] = clean_windows
+    risk = raw.get("risk")
+    if isinstance(risk, dict):
+        out["risk"] = {
+            "overall_level": str(risk.get("overall_level") or risk.get("level") or "")[
+                :20
+            ],
+            "overall_score": risk.get("overall_score", risk.get("score")),
+            "label": str(risk.get("label") or "")[:80],
+            "why": str(risk.get("why") or risk.get("summary") or "")[:500],
+        }
+    if isinstance(raw.get("radar_status"), str):
+        out["radar_status"] = raw["radar_status"][:40]
+    if isinstance(raw.get("radar_note"), str):
+        out["radar_note"] = raw["radar_note"][:240]
     alerts = raw.get("alerts")
     if isinstance(alerts, list):
         clean_alerts = []

@@ -124,6 +124,7 @@
 
     setCondition(condition, nowcast) {
       const body = document.body;
+      if (body.classList.contains("sky-lock")) return;
       const state = condition || "partly-cloudy";
       [...body.classList].forEach((c) => {
         if (c.startsWith("cond-") || c.startsWith("atm-")) body.classList.remove(c);
@@ -187,8 +188,8 @@
       if (hour < 12) greet = "Good morning";
       else if (hour < 17) greet = "Good afternoon";
       else greet = "Good evening";
-      if (label) label.textContent = "Atmospheric conditions across India";
-      if (title) title.textContent = `${greet}, India`;
+      if (label) label.textContent = `${greet} · Atmospheric intelligence`;
+      if (title) title.textContent = "VajraNet";
     },
 
     applyAtmosphere(state) {
@@ -588,6 +589,7 @@
           ],
         },
         options: {
+          responsive: true,
           plugins: { legend: { labels: { color: "#647c91" } } },
           scales: {
             x: {
@@ -960,6 +962,9 @@
           const nowcast = window.VAJRANET_NOWCAST || {};
           const payload = {
             question,
+            city: window.VAJRANET_CITY || this.selectedCity || "",
+            language: document.getElementById("ask-lang")?.value || "en",
+            use_live_data: true,
             context: {
               city: window.VAJRANET_CITY || this.selectedCity,
               location: weather.location || {},

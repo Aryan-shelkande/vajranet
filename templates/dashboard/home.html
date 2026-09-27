@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="hero-weather" id="overview">
-  <p class="hero-kicker" id="hero-greeting-label">Atmospheric conditions</p>
-  <h1 class="hero-greeting" id="hero-greeting">Good day, India</h1>
-  <p class="hero-sub">Live conditions, baseline nowcasts, and preparedness guidance — clearly labeled as forecast, model estimate, or derived risk.</p>
+  <p class="hero-kicker" id="hero-greeting-label">Atmospheric &amp; disaster intelligence</p>
+  <h1 class="hero-greeting" id="hero-greeting">VajraNet</h1>
+  <p class="hero-sub">Live conditions, model estimates, and preparedness guidance. Official alerts, observations, forecasts, and AI interpretation stay labeled separately.</p>
 
   <div class="search-wrap" id="city-search">
     <form class="search-bar" action="{% url 'home' %}" method="get" role="search" id="city-search-form">
@@ -61,6 +61,7 @@
 
   <article class="panel" id="nowcast-card">
     <div class="meta"><span class="badge model">Baseline nowcast · Derived risk</span></div>
+    {% if nowcast.experimental_label %}<p class="meta">{{ nowcast.experimental_label }}</p>{% endif %}
     <h2>Thunderstorm nowcast</h2>
     {% if nowcast %}
       <div class="meta" id="nowcast-place">{{ nowcast.location.name }} · Next 60 minutes</div>
@@ -87,6 +88,8 @@
   </article>
 </section>
 
+{% include "includes/ai_risk.html" %}
+
 <section class="section panel" id="alerts-section">
   <h2>Active alerts</h2>
   <p class="meta" id="alert-note">{{ alert_note }}</p>
@@ -94,12 +97,16 @@
   {% if alerts %}
     {% for a in alerts %}
       <div class="alert-item {{ a.severity }}">
-        <strong>⚠ {{ a.title }}</strong>
+        <strong>{{ a.title }}</strong>
         <span>{{ a.area_name }} · {{ a.severity|upper }}
-          {% if a.data_kind == "derived_risk" or a.origin == "derived" %}
-            · <span class="badge derived">Derived risk</span>
+          {% if a.origin == "official" %}
+            · <span class="badge official">Official alert</span>
+          {% elif a.origin == "observed" %}
+            · <span class="badge observed">Observed</span>
+          {% elif a.data_kind == "cached" %}
+            · <span class="badge unavailable">Cached</span>
           {% else %}
-            · {{ a.data_kind|default:a.origin }}
+            · <span class="badge model">Model estimate</span>
           {% endif %}
         </span>
         <span>{{ a.description }}</span>
@@ -211,6 +218,10 @@
 </section>
 {% endif %}
 </div>
+
+</section>
+
+{% include "includes/ask_sms.html" %}
 
 <section class="panel section" id="safety-preview">
   <h2>Safety center</h2>

@@ -14,4 +14,16 @@ urlpatterns = [
     path("safety/", views.SafetyPage.as_view(), name="safety"),
     path("data-sources/", views.DataSourcesPage.as_view(), name="data-sources"),
     path("monitoring/", views.MonitoringPage.as_view(), name="monitoring"),
+    path("sms/subscribe/", views.SMSSubscribeView.as_view(), name="sms-subscribe"),
+    path("ask/", views.AskVajraNetView.as_view(), name="ask-vajranet"),
+    path(
+        "alerts/unsubscribe/",
+        views.SMSUnsubscribeView.as_view(),
+        name="sms-unsubscribe",
+    ),
+    path(
+        "alerts/unsubscribe/<str:token>/",
+        views.SMSUnsubscribeView.as_view(),
+        name="sms-unsubscribe-token",
+    ),
 ]

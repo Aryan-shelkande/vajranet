@@ -56,7 +56,9 @@ class Location(TimeStampedModel):
     timezone = models.CharField(max_length=64, default="Asia/Kolkata")
     population = models.PositiveIntegerField(null=True, blank=True)
     is_featured = models.BooleanField(default=False, db_index=True)
-    external_geoname_id = models.PositiveIntegerField(null=True, blank=True, unique=True)
+    external_geoname_id = models.PositiveIntegerField(
+        null=True, blank=True, unique=True
+    )
 
     class Meta:
         ordering = ["name"]
@@ -232,3 +234,113 @@ class APIRequestLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.provider} {'OK' if self.success else 'FAIL'}"
+
+
+class SMSSubscriber(TimeStampedModel):
+    """Visitor SMS opt-in. No user account. Full numbers are masked in admin lists."""
+
+    class Language(models.TextChoices):
+        EN = "en", "English"
+        HI = "hi", "Hindi"
+        MR = "mr", "Marathi"
+
+    name = models.CharField(max_length=80)
+    mobile_number = models.CharField(max_length=16)
+    normalized_mobile_number = models.CharField(max_length=16, unique=True)
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sms_subscribers",
+    )
+    location_label = models.CharField(max_length=160)
+    latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True
+    )
+    longitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True
+    )
+    language = models.CharField(
+        max_length=8, choices=Language.choices, default=Language.EN
+    )
+    alert_preferences = models.JSONField(default=list)
+    is_active = models.BooleanField(default=True, db_index=True)
+    phone_verified = models.BooleanField(default=False)
+    consent_given = models.BooleanField(default=False)
+    consent_timestamp = models.DateTimeField(null=True, blank=True)
+    last_alert_sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = (
+            models.Index(fields=["is_active", "language"]),
+            models.Index(fields=["location", "is_active"]),
+        )
+
+    def masked_number(self) -> str:
+        from weather.services.phone import mask_mobile
+
+        return mask_mobile(self.normalized_mobile_number)
+
+    def __str__(self) -> str:
+        return f"{self.name} {self.masked_number()}"
+
+
+class SMSDelivery(models.Model):
+    """Audit of an SMS attempt. Stores a masked recipient, never a raw number."""
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        SENT = "SENT", "Sent"
+        FAILED = "FAILED", "Failed"
+        SKIPPED = "SKIPPED", "Skipped"
+        DEMO = "DEMO", "Demo"
+
+    subscriber = models.ForeignKey(
+        SMSSubscriber,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="deliveries",
+    )
+    masked_recipient = models.CharField(max_length=20)
+    fingerprint = models.CharField(max_length=64, db_index=True)
+    category = models.CharField(max_length=32)
+    language = models.CharField(max_length=8, default="en")
+    body = models.TextField()
+    status = models.CharField(max_length=16, choices=Status.choices, db_index=True)
+    provider = models.CharField(max_length=32, default="demo")
+    error_code = models.CharField(max_length=64, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self) -> str:
+        return f"{self.status} {self.category} {self.masked_recipient}"
+
+
+class AlertDispatch(TimeStampedModel):
+    """Dedup record so the same hazard is not texted repeatedly."""
+
+    event_type = models.CharField(max_length=32, db_index=True)
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="alert_dispatches",
+    )
+    location_label = models.CharField(max_length=160, blank=True)
+    severity = models.CharField(max_length=20)
+    valid_until = models.DateTimeField(null=True, blank=True)
+    fingerprint = models.CharField(max_length=64, unique=True)
+    last_sent_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    send_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ("-last_sent_at",)
+
+    def __str__(self) -> str:
+        return f"{self.event_type} {self.location_label} {self.severity}"

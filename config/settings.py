@@ -172,6 +172,16 @@ OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
 OPENAI_MODEL = env("OPENAI_MODEL", default="gpt-4o-mini")
 OLLAMA_BASE_URL = env("OLLAMA_BASE_URL", default="http://127.0.0.1:11434")
 OLLAMA_MODEL = env("OLLAMA_MODEL", default="llama3.2")
+AI_BRIEFING_CACHE_SECONDS = env.int("AI_BRIEFING_CACHE_SECONDS", default=600)
+
+# SMS alerts — demo mode is the default so local use does not spend credits.
+SMS_ENABLED = env.bool("SMS_ENABLED", default=True)
+SMS_DEMO_MODE = env.bool("SMS_DEMO_MODE", default=True)
+SMS_PROVIDER = env("SMS_PROVIDER", default="demo")
+SMS_API_URL = env("SMS_API_URL", default="")
+SMS_API_KEY = env("SMS_API_KEY", default="")
+SMS_SENDER_ID = env("SMS_SENDER_ID", default="VAJRANET")
+SMS_TIMEOUT_SECONDS = env.float("SMS_TIMEOUT_SECONDS", default=8.0)
 
 WEATHER_CACHE_SECONDS = env("WEATHER_CACHE_SECONDS")
 FORECAST_CACHE_SECONDS = env("FORECAST_CACHE_SECONDS")

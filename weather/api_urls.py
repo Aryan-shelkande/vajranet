@@ -26,4 +26,12 @@ urlpatterns = [
     ),
     path("data-sources/", api.DataSourcesAPI.as_view(), name="api-data-sources"),
     path("assistant/", api.AIAssistantAPI.as_view(), name="api-assistant"),
+    path("risk/", api.AtmosphericRiskAPI.as_view(), name="api-risk"),
+    path("briefing/", api.BriefingAPI.as_view(), name="api-briefing"),
+    path("sms/subscribe/", api.SMSSubscribeAPI.as_view(), name="api-sms-subscribe"),
+    path(
+        "sms/unsubscribe/",
+        api.SMSUnsubscribeAPI.as_view(),
+        name="api-sms-unsubscribe",
+    ),
 ]

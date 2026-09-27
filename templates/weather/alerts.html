@@ -3,6 +3,7 @@
 <section class="page-hero">
   <h1>Weather alerts</h1>
   <p>Platform-derived estimates for situational awareness. Official warnings come from IMD and NDMA.</p>
+  <p><a class="btn secondary" href="/?city={{ city|urlencode }}#sms-alerts">Get SMS alerts — no account</a></p>
   <form class="search-bar" method="get" style="max-width:520px">
     <span class="search-icon" aria-hidden="true">🔍</span>
     <input name="city" value="{{ city }}" aria-label="City">
@@ -15,10 +16,12 @@
     <div class="alert-item {{ a.severity }}">
       <strong>⚠ {{ a.title }}</strong>
       <span>{{ a.area_name }} · {{ a.severity|upper }}
-        {% if a.data_kind == "derived_risk" or a.origin == "derived" %}
-          · <span class="badge derived">Derived risk</span>
+        {% if a.origin == "official" %}
+          · <span class="badge official">Official alert</span>
+        {% elif a.origin == "observed" %}
+          · <span class="badge observed">Observed</span>
         {% else %}
-          · {{ a.data_kind|default:a.origin }}
+          · <span class="badge model">Model estimate</span>
         {% endif %}
       </span>
       <span>{{ a.description }}</span>

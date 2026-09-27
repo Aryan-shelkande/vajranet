@@ -24,12 +24,29 @@
       <p>Score {{ nowcast.risk_score }}/100 · {{ nowcast.label }}</p>
       <div class="risk-meter" aria-hidden="true"><span style="width:{{ nowcast.risk_score }}%"></span></div>
       <p class="meta">Not an AI prediction · Not an official warning</p>
+      {% if nowcast.experimental_label %}
+        <p class="meta">{{ nowcast.experimental_label }} · Confidence {{ nowcast.confidence }}</p>
+      {% endif %}
     </div>
     {% if current %}
     <div class="stat"><strong>{{ current.temperature_c|floatformat:0 }}°C</strong><span>{{ current.weather_description }}</span></div>
     {% endif %}
   </div>
   <p class="meta">{{ nowcast.disclaimer }}</p>
+  {% if nowcast.windows.next_60_minutes.available %}
+    <h3>Next 60 minutes</h3>
+    <p>
+      Thunderstorm risk {{ nowcast.windows.next_60_minutes.thunderstorm_risk_pct }}%
+      · {{ nowcast.windows.next_60_minutes.thunderstorm_level }}
+      · Window {{ nowcast.windows.next_60_minutes.expected_window }}
+    </p>
+    <p class="meta">Precipitation trend: {{ nowcast.precipitation_trend }}. Radar: {{ nowcast.radar.note }}</p>
+    <ul class="factor-list">
+      {% for signal in nowcast.signals %}
+        <li>{{ signal }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
   {% if nowcast.unused_inputs_note %}<p class="meta">{{ nowcast.unused_inputs_note }}</p>{% endif %}
   <h3>Explainable factors</h3>
   <ul class="factor-list">

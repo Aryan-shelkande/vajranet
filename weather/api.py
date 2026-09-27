@@ -230,5 +230,114 @@ class AIAssistantAPI(APIView):
         context = sanitize_ai_context(
             raw_context if isinstance(raw_context, dict) else {}
         )
-        result = AIAssistant().answer(question, context)
+        language = request.data.get("language") if hasattr(request, "data") else None
+        if not isinstance(language, str):
+            language = "en"
+        language = language.strip().lower()[:8]
+        if request.data.get("use_live_data") and isinstance(
+            request.data.get("city"), str
+        ):
+            from weather.services.live_context import build_live_context
+
+            live = build_live_context(request.data.get("city"))
+            if live:
+                context = sanitize_ai_context(live)
+        result = AIAssistant().answer(question, context, language=language)
         return Response(result)
+
+
+class AtmosphericRiskAPI(APIView):
+    def get(self, request):
+        city = request.query_params.get("city", "Pune")
+        try:
+            from weather.services.live_context import build_risk
+
+            return Response(build_risk(city))
+        except ObjectDoesNotExist:
+            return Response({"error": "location_not_found"}, status=404)
+        except ProviderError as exc:
+            return Response(
+                {"error": "provider_error", "message": str(exc)}, status=502
+            )
+
+
+class BriefingAPI(APIView):
+    def get(self, request):
+        city = request.query_params.get("city", "Pune")
+        language = (request.query_params.get("language") or "en").lower()
+        allow_llm = request.query_params.get("llm") == "1"
+        try:
+            from weather.services.live_context import build_briefing
+
+            return Response(
+                build_briefing(city, language=language, allow_llm=allow_llm)
+            )
+        except ObjectDoesNotExist:
+            return Response({"error": "location_not_found"}, status=404)
+        except ProviderError as exc:
+            return Response(
+                {"error": "provider_error", "message": str(exc)}, status=502
+            )
+
+
+class SMSSubscribeAPI(APIView):
+    def post(self, request):
+        from weather.services.subscriptions import (
+            SubscriptionError,
+            SubscriptionService,
+        )
+
+        payload = request.data if isinstance(request.data, dict) else {}
+        alert_types = (
+            payload.get("alert_types") or payload.get("alert_preferences") or []
+        )
+        if isinstance(alert_types, str):
+            alert_types = [
+                part.strip() for part in alert_types.split(",") if part.strip()
+            ]
+        consent = payload.get("consent")
+        if isinstance(consent, str):
+            consent = consent.strip().lower() in {"1", "true", "yes", "on"}
+        try:
+            result = SubscriptionService().subscribe(
+                name=payload.get("name") or "",
+                mobile_number=payload.get("mobile_number") or "",
+                location_label=payload.get("location") or payload.get("city") or "",
+                alert_types=list(alert_types),
+                language=(payload.get("language") or "en"),
+                consent=bool(consent),
+                unsubscribe_base_url=request.build_absolute_uri("/alerts/unsubscribe"),
+            )
+        except SubscriptionError as exc:
+            return Response({"error": exc.code}, status=400)
+        if result["delivery"]["status"] not in {"SENT", "DEMO"}:
+            return Response(
+                {
+                    "error": "sms_not_accepted",
+                    "delivery": {"status": result["delivery"]["status"]},
+                },
+                status=502,
+            )
+        return Response(result, status=201)
+
+
+class SMSUnsubscribeAPI(APIView):
+    def post(self, request):
+        from weather.services.subscriptions import (
+            SubscriptionError,
+            SubscriptionService,
+        )
+
+        mobile = ""
+        if isinstance(request.data, dict):
+            mobile = request.data.get("mobile_number") or ""
+        try:
+            SubscriptionService().unsubscribe_mobile(mobile)
+        except SubscriptionError as exc:
+            return Response({"error": exc.code}, status=400)
+        return Response(
+            {
+                "ok": True,
+                "message": "If this number was subscribed, SMS alerts are now off.",
+            }
+        )

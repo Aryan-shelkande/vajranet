@@ -32,6 +32,24 @@ services:
         sync: false
       - key: OPENWEATHER_API_KEY
         sync: false
+      - key: SMS_ENABLED
+        value: "True"
+      - key: SMS_DEMO_MODE
+        value: "True"
+      - key: SMS_PROVIDER
+        value: demo
+      - key: SMS_API_URL
+        sync: false
+      - key: SMS_API_KEY
+        sync: false
+      - key: SMS_SENDER_ID
+        value: VAJRANET
+      - key: AI_PROVIDER
+        value: platform
+      - key: OLLAMA_BASE_URL
+        sync: false
+      - key: OLLAMA_MODEL
+        value: llama3.2
 
 databases:
   - name: vajranet-db

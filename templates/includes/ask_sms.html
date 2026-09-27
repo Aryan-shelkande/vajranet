@@ -1,0 +1,162 @@
+<section class="section" id="ask-vajranet">
+  <article class="panel">
+    <div class="meta"><span class="badge ai">Ask VajraNet</span></div>
+    <h2>Ask VajraNet</h2>
+    <p class="meta">Answers use current platform data for {{ city }}. Missing fields are called unavailable.</p>
+    {% if ask_result %}
+      <div class="ask-result" role="status">
+        <p class="meta">{{ ask_result.label }}{% if ask_result.provider_error %} · {{ ask_result.provider_error }}{% endif %}</p>
+        <p><strong>{{ ask_result.question }}</strong></p>
+        <p>{{ ask_result.answer }}</p>
+      </div>
+    {% endif %}
+    <form method="post" action="{% url 'ask-vajranet' %}" class="stack-form">
+      {% csrf_token %}
+      <input type="hidden" name="city" value="{{ city }}">
+      <label for="ask-question">Ask a weather question</label>
+      <input id="ask-question" name="question" type="text" maxlength="500" required placeholder="Will it rain in {{ city }} today?">
+      <label for="ask-lang">Language</label>
+      <select id="ask-lang" name="language">
+        {% for code, label in sms_languages %}
+          <option value="{{ code }}" {% if language == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn">Ask</button>
+    </form>
+  </article>
+</section>
+
+<section class="section" id="sms-alerts">
+  <article class="panel sms-panel">
+    <p class="sms-kicker">Weather &amp; disaster alerts</p>
+    <h2>Stay ahead of changing conditions</h2>
+    <p class="sms-lead">Get important weather and disaster alerts for your selected location directly on your mobile.</p>
+    <ul class="sms-benefits">
+      <li>Weather alerts</li>
+      <li>Severe weather notifications</li>
+      <li>Disaster awareness</li>
+      <li>Multiple languages</li>
+      <li>No account required</li>
+    </ul>
+
+    {% if sms_success %}
+      <div class="sms-success" role="status">
+        <p class="sms-success-mark" aria-hidden="true">✓</p>
+        <h3>Alerts Activated</h3>
+        <p>You're all set. VajraNet will notify you about important weather and disaster conditions for {{ sms_success.location }}.</p>
+        {% if sms_success.repeated %}
+          <p>This number is already active, so another welcome message was not sent.</p>
+        {% elif sms_success.status == "SENT" %}
+          <p>Welcome SMS sent.</p>
+        {% elif sms_success.status == "DEMO" %}
+          <p>Welcome SMS simulated — no SMS credit used.</p>
+        {% endif %}
+        {% if sms_success.simulated %}
+          <p class="sms-demo-badge">Demo mode — no SMS credit used</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if sms_form %}
+      <p class="form-error" role="alert">{% if sms_form.field == "form" %}{{ sms_form.message }}{% else %}Unable to activate alerts. {{ sms_form.message }}{% endif %}</p>
+    {% endif %}
+
+    <form method="post" action="{% url 'sms-subscribe' %}" class="sms-form">
+      {% csrf_token %}
+
+      <fieldset class="sms-group">
+        <legend>Your details</legend>
+        <div class="sms-fields">
+          <div class="field{% if sms_form and sms_form.field == 'name' %} has-error{% endif %}">
+            <label for="sms-name">Name</label>
+            <input id="sms-name" name="name" required maxlength="80" autocomplete="name" value="{% if sms_form %}{{ sms_form.name }}{% endif %}" {% if sms_form and sms_form.field == 'name' %}aria-invalid="true" aria-describedby="sms-name-error"{% endif %}>
+            {% if sms_form and sms_form.field == "name" %}
+              <p class="field-error" id="sms-name-error">{{ sms_form.message }}</p>
+            {% endif %}
+          </div>
+          <div class="field{% if sms_form and sms_form.field == 'mobile_number' %} has-error{% endif %}">
+            <label for="sms-mobile">Mobile number</label>
+            <input id="sms-mobile" name="mobile_number" required inputmode="tel" autocomplete="tel" placeholder="98XXXXXXXX" maxlength="16" value="{% if sms_form %}{{ sms_form.mobile_number }}{% endif %}" {% if sms_form and sms_form.field == 'mobile_number' %}aria-invalid="true" aria-describedby="sms-mobile-error"{% endif %}>
+            {% if sms_form and sms_form.field == "mobile_number" %}
+              <p class="field-error" id="sms-mobile-error">{{ sms_form.message }}</p>
+            {% endif %}
+          </div>
+          <div class="field{% if sms_form and sms_form.field == 'location' %} has-error{% endif %}">
+            <label for="sms-location">Location</label>
+            <select id="sms-location" name="location" required {% if sms_form and sms_form.field == 'location' %}aria-invalid="true" aria-describedby="sms-location-error"{% endif %}>
+              {% for loc in featured %}
+                <option value="{{ loc.name }}" {% if sms_form %}{% if loc.name == sms_form.location %}selected{% endif %}{% elif loc.name == city %}selected{% endif %}>{{ loc.name }}{% if loc.state %}, {{ loc.state }}{% endif %}</option>
+              {% endfor %}
+            </select>
+            {% if sms_form and sms_form.field == "location" %}
+              <p class="field-error" id="sms-location-error">{{ sms_form.message }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="sms-group{% if sms_form and sms_form.field == 'alert_types' %} has-error{% endif %}">
+        <legend>Alert preferences</legend>
+        <div class="pref-grid" {% if sms_form and sms_form.field == 'alert_types' %}aria-describedby="sms-alerts-error"{% endif %}>
+          {% for key, label in alert_categories %}
+            <label class="pref-card">
+              <input type="checkbox" name="alert_types" value="{{ key }}" {% if sms_form %}{% if key in sms_form.alert_types %}checked{% endif %}{% else %}checked{% endif %}>
+              <span class="pref-icon" aria-hidden="true">
+                {% if key == "heavy_rain" %}
+                  <svg viewBox="0 0 24 24"><path d="M7 15a4 4 0 0 1-.2-8 5 5 0 0 1 9.6-1.2A3.5 3.5 0 0 1 17 13" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                {% elif key == "thunderstorm" %}
+                  <svg viewBox="0 0 24 24"><path d="M7 14a4 4 0 0 1-.2-8 5 5 0 0 1 9.6-1.2A3.5 3.5 0 0 1 17 12" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 13l-2 4h3l-2 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                {% elif key == "lightning" %}
+                  <svg viewBox="0 0 24 24"><path d="M13 2L6 14h6l-1 8 8-14h-6l0-6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                {% elif key == "flood" %}
+                  <svg viewBox="0 0 24 24"><path d="M3 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2M3 19c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                {% elif key == "cyclone" %}
+                  <svg viewBox="0 0 24 24"><path d="M12 12a3 3 0 1 0 0-6 5 5 0 0 1 5 5 7 7 0 0 1-7 7 9 9 0 0 1-9-9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                {% elif key == "extreme_heat" %}
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                {% elif key == "earthquake" %}
+                  <svg viewBox="0 0 24 24"><path d="M3 16l3-2 2 3 3-5 2 4 3-3 2 2 3-2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                {% else %}
+                  <svg viewBox="0 0 24 24"><path d="M12 4l8 14H4L12 4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4M12 16.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                {% endif %}
+              </span>
+              <span class="pref-label">{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        {% if sms_form and sms_form.field == "alert_types" %}
+          <p class="field-error" id="sms-alerts-error">{{ sms_form.message }}</p>
+        {% endif %}
+      </fieldset>
+
+      <fieldset class="sms-group{% if sms_form and sms_form.field == 'language' %} has-error{% endif %}">
+        <legend>Language</legend>
+        <label for="sms-lang">Preferred language</label>
+        <select id="sms-lang" name="language" {% if sms_form and sms_form.field == 'language' %}aria-invalid="true" aria-describedby="sms-lang-error"{% endif %}>
+          {% for code, label in sms_languages %}
+            <option value="{{ code }}" {% if sms_form %}{% if sms_form.language == code %}selected{% endif %}{% elif language == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% if sms_form and sms_form.field == "language" %}
+          <p class="field-error" id="sms-lang-error">{{ sms_form.message }}</p>
+        {% endif %}
+      </fieldset>
+
+      <fieldset class="sms-group consent-group{% if sms_form and sms_form.field == 'consent' %} has-error{% endif %}">
+        <legend>Consent</legend>
+        <label class="consent" for="sms-consent">
+          <input id="sms-consent" type="checkbox" name="consent" required {% if sms_form and sms_form.field == 'consent' %}aria-invalid="true" aria-describedby="sms-consent-error"{% endif %}>
+          <span>I agree to receive weather and disaster alerts from VajraNet on the mobile number provided.</span>
+        </label>
+        {% if sms_form and sms_form.field == "consent" %}
+          <p class="field-error" id="sms-consent-error">{{ sms_form.message }}</p>
+        {% endif %}
+      </fieldset>
+
+      <div class="sms-actions">
+        <button type="submit" class="btn sms-cta">Activate SMS Alerts</button>
+        <p class="meta">Weather and disaster messages only. No promotional texts. <a href="{% url 'sms-unsubscribe' %}">Unsubscribe</a></p>
+      </div>
+    </form>
+  </article>
+</section>

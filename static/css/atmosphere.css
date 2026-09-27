@@ -445,14 +445,16 @@ body.theme-cloudy.cond-thunderstorm .atmosphere .atm-sky {
 
 /* —— Storm / Alerts —— */
 body.theme-storm .atmosphere .atm-sky {
-  background: linear-gradient(
-    180deg,
-    #24344e 0%,
-    #3d5068 26%,
-    #627890 55%,
-    #97a9bd 80%,
-    #c5d1df 100%
-  );
+  background:
+    radial-gradient(ellipse 48% 32% at 74% 10%, rgba(125, 180, 255, 0.22), transparent 62%),
+    linear-gradient(
+      180deg,
+      #121c33 0%,
+      #1a3058 24%,
+      #243f72 48%,
+      #3d628f 74%,
+      #6d8eae 100%
+    );
   animation: atm-sky-shift 40s ease-in-out infinite alternate;
 }
 body.theme-storm .atmosphere .atm-clouds {
@@ -515,8 +517,8 @@ body.theme-sunset .atmosphere .atm-sky {
     radial-gradient(ellipse 60% 45% at 76% 72%, rgba(255, 170, 110, 0.28), transparent 58%),
     linear-gradient(
       180deg,
-      #648ebc 0%,
-      #879fc8 16%,
+      #2f5f9a 0%,
+      #6d7eb8 16%,
       #b0a4cb 36%,
       #e0b090 60%,
       #f4c9a4 78%,
@@ -579,6 +581,8 @@ body.theme-sunset .atmosphere .atm-haze {
     rgba(255, 195, 150, 0.28) 100%
   );
 }
+body.theme-sunset .page-hero h1 { color: #1b2438; }
+body.theme-sunset .page-hero p { color: #243044; }
 body.theme-sunset .map-panel,
 body.theme-sunset .map-frame {
   position: relative;
@@ -662,6 +666,49 @@ body.theme-night .hero-sub,
 body.theme-night .hero-kicker {
   color: rgba(220, 230, 245, 0.88);
 }
+
+/* Clear daytime sky — weather and calm overview states */
+body.theme-clear .atmosphere .atm-sky {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(186, 230, 253, 0.95), transparent 62%),
+    linear-gradient(180deg, #4ea8e8 0%, #8ecff5 42%, #e7f6ff 100%);
+}
+body.theme-clear .atmosphere .atm-horizon { opacity: 0.28; }
+body.theme-clear .atmosphere .atm-orb { opacity: 0.9; }
+body.theme-clear .atmosphere .atm-clouds { opacity: 0.34; }
+body.theme-clear .atmosphere .atm-clouds-b { opacity: 0.18; }
+body.theme-clear .atmosphere .atm-rain,
+body.theme-clear .atmosphere .atm-lightning,
+body.theme-clear .atmosphere .atm-stars { opacity: 0; }
+
+.atmosphere .atm-rainbow {
+  left: 8%;
+  right: 8%;
+  top: 12%;
+  height: 38vh;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 62%,
+    rgba(239, 68, 68, 0.16) 64%,
+    rgba(245, 158, 11, 0.16) 66%,
+    rgba(250, 204, 21, 0.14) 68%,
+    rgba(34, 197, 94, 0.14) 70%,
+    rgba(56, 189, 248, 0.16) 72%,
+    rgba(99, 102, 241, 0.14) 74%,
+    transparent 78%
+  );
+  pointer-events: none;
+}
+body.show-rainbow .atmosphere .atm-rainbow { opacity: 0.38; }
+
+body.cond-thunderstorm:not(.theme-storm):not(.theme-sunrise):not(.theme-sunset):not(.theme-clear):not(.theme-rain):not(.theme-night):not(.theme-plain) .atmosphere .atm-sky {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(30, 41, 59, 0.2), transparent 70%),
+    linear-gradient(180deg, #243044 0%, #4b5568 48%, #8d8474 100%);
+}
+body.cond-thunderstorm .atmosphere .atm-clouds { opacity: 0.72; filter: brightness(0.8); }
 
 /* —— Weather condition intensity —— */
 body.cond-sunny.theme-sunrise .atmosphere .atm-orb {
@@ -856,3 +903,51 @@ body.atm-thunderstorm:not([class*="theme-"]) .atmosphere .atm-rain { opacity: 0.
     --atm-scroll: 0;
   }
 }
+
+/* Page identities that stay distinct from live weather restyling. */
+body.theme-rain .atmosphere .atm-sky {
+  background:
+    radial-gradient(ellipse 70% 36% at 50% 0%, rgba(186, 230, 253, 0.28), transparent 64%),
+    linear-gradient(180deg, #163e56 0%, #1f6278 30%, #3d8ea3 62%, #9ec9d2 100%);
+}
+body.theme-rain .atmosphere .atm-clouds { opacity: 0.62; filter: brightness(0.82); }
+body.theme-rain .atmosphere .atm-clouds-b { opacity: 0.36; }
+body.theme-rain .atmosphere .atm-rain { opacity: 0.4; }
+body.theme-rain .atmosphere .atm-lightning,
+body.theme-rain .atmosphere .atm-stars,
+body.theme-rain .atmosphere .atm-orb,
+body.theme-rain .atmosphere .atm-storm-glow { opacity: 0; }
+body.theme-rain .site-header { background: rgba(236, 247, 250, 0.9); }
+body.theme-rain .page-hero h1 { color: #f4fbff; text-shadow: 0 1px 14px rgba(12, 40, 56, 0.35); }
+body.theme-rain .page-hero p { color: rgba(236, 248, 252, 0.92); }
+
+body.theme-plain .atmosphere .atm-sky {
+  background: linear-gradient(180deg, #eef3f7 0%, #f7f8fa 100%);
+  animation: none;
+}
+body.theme-plain .atmosphere .atm-orb,
+body.theme-plain .atmosphere .atm-horizon,
+body.theme-plain .atmosphere .atm-clouds,
+body.theme-plain .atmosphere .atm-clouds-b,
+body.theme-plain .atmosphere .atm-clouds-c,
+body.theme-plain .atmosphere .atm-rain,
+body.theme-plain .atmosphere .atm-stars,
+body.theme-plain .atmosphere .atm-lightning,
+body.theme-plain .atmosphere .atm-rainbow,
+body.theme-plain .atmosphere .atm-haze,
+body.theme-plain .atmosphere .atm-storm-glow,
+body.theme-plain .atmosphere .atm-particles,
+body.theme-plain .atmosphere .atm-moon { opacity: 0; }
+
+body.theme-clear .atmosphere .atm-clouds { opacity: 0.5; }
+body.theme-clear .atmosphere .atm-clouds-b { opacity: 0.28; }
+body.theme-storm.cond-thunderstorm .atmosphere .atm-rain { opacity: 0.28; }
+body.theme-storm .atmosphere .atm-lightning.is-flash { opacity: 0.26; }
+body.theme-sunrise .atmosphere .atm-rain,
+body.theme-sunset .atmosphere .atm-rain,
+body.theme-clear .atmosphere .atm-rain,
+body.theme-night .atmosphere .atm-rain,
+body.theme-plain .atmosphere .atm-rain { opacity: 0; }
+body.theme-night.sky-lock .atmosphere .atm-stars { opacity: 0.82; }
+body.theme-night.sky-lock .atmosphere .atm-moon { opacity: 0.74; }
+body.theme-night.sky-lock .atmosphere .atm-clouds { opacity: 0.2; }

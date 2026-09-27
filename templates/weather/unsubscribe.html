@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <h1>Unsubscribe from SMS alerts</h1>
+  <p>Stop weather and disaster texts. This does not affect any website account, because subscriptions do not use one.</p>
+</section>
+<article class="panel section" style="max-width:32rem">
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    <label for="unsub-mobile">Mobile number</label>
+    <input id="unsub-mobile" name="mobile_number" required inputmode="tel" autocomplete="tel" placeholder="98XXXXXXXX">
+    <button type="submit" class="btn">Turn off SMS alerts</button>
+  </form>
+</article>
+{% endblock %}

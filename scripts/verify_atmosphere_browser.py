@@ -9,10 +9,12 @@ from playwright.sync_api import sync_playwright
 
 PAGES = [
     ("/", "sunrise", ".atm-clouds .atm-drift"),
-    ("/weather/", "cloudy", ".atm-clouds .atm-drift"),
-    ("/alerts/", "storm", ".atm-clouds .atm-drift"),
-    ("/radar/", "sunset", ".atm-clouds .atm-drift"),
-    ("/nowcasting/", "night", ".atm-stars .atm-drift"),
+    ("/nowcasting/", "sunset", ".atm-clouds .atm-drift"),
+    ("/weather/", "clear", ".atm-clouds .atm-drift"),
+    ("/radar/", "storm", ".atm-clouds .atm-drift"),
+    ("/alerts/", "rain", ".atm-clouds .atm-drift"),
+    ("/monitoring/", "night", ".atm-stars .atm-drift"),
+    ("/data-sources/", "plain", ".atm-sky"),
 ]
 
 
@@ -112,14 +114,15 @@ def main() -> int:
                     or item["blocked"]
                 ):
                     ok = False
+            motion_required = path != "/data-sources/"
             if (
                 not theme_ok
                 or not has_atm
                 or item["osm"]
                 or item["carto"]
                 or drifts < 5
-                or not motion.get("has_animation")
-                or not motion.get("transform_changed")
+                or (motion_required and not motion.get("has_animation"))
+                or (motion_required and not motion.get("transform_changed"))
             ):
                 ok = False
             results.append(item)

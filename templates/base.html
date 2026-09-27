@@ -20,7 +20,7 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body
-  class="theme-{{ page_theme|default:'sunrise' }} cond-{{ atmosphere|default:'partly-cloudy' }} {% block body_class %}{% endblock %}"
+  class="theme-{{ page_theme|default:'sunrise' }} cond-{{ atmosphere|default:'partly-cloudy' }}{% if show_rainbow %} show-rainbow{% endif %} {{ body_class|default:'' }} {% block body_class %}{% endblock %}"
   data-page-theme="{{ page_theme|default:'sunrise' }}"
   data-atmosphere="{{ atmosphere|default:'partly-cloudy' }}"
   data-intensity="{{ atm_intensity|default:'medium' }}"
@@ -41,6 +41,7 @@
     <div class="atm-layer atm-storm-glow"></div>
     <div class="atm-layer atm-lightning"></div>
     <div class="atm-layer atm-stars"><div class="atm-drift"></div></div>
+    <div class="atm-layer atm-rainbow"></div>
     <div class="atm-layer atm-particles"></div>
   </div>
 
@@ -104,8 +105,8 @@
   <aside class="ai-panel" id="vajra-ai-panel" role="dialog" aria-label="Vajra AI assistant" aria-hidden="true">
     <header>
       <div>
-        <strong>Vajra AI</strong>
-        <small>Your atmospheric safety assistant</small>
+        <strong>Ask VajraNet</strong>
+        <small>Weather questions from platform data</small>
       </div>
       <button type="button" class="ai-close" id="ai-close" aria-label="Close assistant">×</button>
     </header>
@@ -114,14 +115,14 @@
       <div class="ai-bubble">How can I help with weather and safety across India?</div>
     </div>
     <div class="ai-suggestions">
-      <button type="button" data-ai-prompt="Is it safe to go outside?">Is it safe outside?</button>
-      <button type="button" data-ai-prompt="What is the weather right now?">Current weather</button>
-      <button type="button" data-ai-prompt="Explain the active alerts">Explain this alert</button>
-      <button type="button" data-ai-prompt="Lightning safety tips">Lightning safety</button>
+      <button type="button" data-ai-prompt="Will it rain today?">Will it rain?</button>
+      <button type="button" data-ai-prompt="Why is the risk high?">Why this risk?</button>
+      <button type="button" data-ai-prompt="What does the radar show?">Radar</button>
+      <button type="button" data-ai-prompt="What should I watch over the next 3 hours?">Next 3 hours</button>
     </div>
     <form class="ai-form" id="ai-form">
       <label class="visually-hidden" for="ai-input" style="position:absolute;left:-9999px">Ask Vajra AI</label>
-      <input id="ai-input" name="question" type="text" maxlength="500" placeholder="Ask Vajra AI..." autocomplete="off" required>
+      <input id="ai-input" name="question" type="text" maxlength="500" placeholder="Ask VajraNet..." autocomplete="off" required>
       <button type="submit">Ask</button>
     </form>
   </aside>

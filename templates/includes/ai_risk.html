@@ -1,0 +1,84 @@
+{% if risk %}
+<section class="section intel-grid" id="ai-risk">
+  <article class="panel risk-panel">
+    <div class="meta"><span class="badge model">{{ risk.label }}</span> <span class="badge ai">AI-derived</span></div>
+    <h2>AI atmospheric risk</h2>
+    <p class="meta">{{ risk.location.name|default:city }}{% if risk.location.state %}, {{ risk.location.state }}{% endif %}</p>
+    <div class="risk-level {{ risk.overall.level }}">{{ risk.overall.level }}</div>
+    <p class="meta">Score {{ risk.overall.score }}/100 · Confidence {{ risk.confidence }} · {{ risk.freshness|upper }}</p>
+    <p class="meta">{{ risk.confidence_note }}</p>
+    <ul class="risk-bars">
+      <li>
+        <span>Rain</span>
+        <strong class="risk-level {{ risk.categories.rain.level }}">{{ risk.categories.rain.level }}</strong>
+      </li>
+      <li>
+        <span>Thunderstorm</span>
+        <strong class="risk-level {{ risk.categories.storm.level }}">{{ risk.categories.storm.level }}</strong>
+      </li>
+      <li>
+        <span>Wind</span>
+        <strong class="risk-level {{ risk.categories.wind.level }}">{{ risk.categories.wind.level }}</strong>
+      </li>
+      <li>
+        <span>Flood</span>
+        <strong class="risk-level {{ risk.categories.flood.level }}">{{ risk.categories.flood.level }}</strong>
+      </li>
+    </ul>
+    <details class="why-risk">
+      <summary>Why this risk?</summary>
+      <p>{{ risk.why }}</p>
+      <p class="meta">{{ risk.disclaimer }}</p>
+      <p class="meta">Sources: weather {{ risk.sources.weather|default:"unavailable" }} · nowcast {{ risk.sources.nowcast }} · radar {{ risk.sources.radar }}</p>
+    </details>
+  </article>
+
+  <article class="panel">
+    <div class="meta"><span class="badge ai">{{ briefing.label|default:"Automated interpretation" }}</span></div>
+    <h2>AI weather briefing</h2>
+    {% if briefing %}
+      <p>{{ briefing.text }}</p>
+      <p class="meta">{{ briefing.disclaimer }}</p>
+      <form method="get" class="lang-row" action="{% url 'home' %}">
+        <input type="hidden" name="city" value="{{ city }}">
+        <input type="hidden" name="view" value="{{ view_mode }}">
+        <label for="brief-lang">Language</label>
+        <select id="brief-lang" name="lang" onchange="this.form.submit()">
+          {% for code, label in sms_languages %}
+            <option value="{{ code }}" {% if language == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    {% else %}
+      <p class="empty">Briefing unavailable until weather fields load.</p>
+    {% endif %}
+  </article>
+</section>
+
+{% if nowcast.windows.next_3_hours.available %}
+<section class="panel section" id="next-hours">
+  <div class="meta"><span class="badge model">{{ nowcast.experimental_label }}</span></div>
+  <h2>Next 3 hours</h2>
+  <p class="meta">{{ nowcast.location.name }} · Forecast fields · Confidence {{ nowcast.confidence }}</p>
+  <div class="hour-timeline">
+    {% for slot in nowcast.windows.next_3_hours.slots %}
+      <div class="hour-card">
+        <div class="t">{{ slot.label }}</div>
+        <strong>{{ slot.precipitation_probability_pct|default:"—" }}%</strong>
+        <div class="t">Rain probability</div>
+        <div class="t">Storm {{ slot.thunderstorm_risk_pct|default:"—" }}%</div>
+      </div>
+      {% if not forloop.last %}<span class="timeline-arrow" aria-hidden="true">→</span>{% endif %}
+    {% endfor %}
+  </div>
+  <p class="meta">Precipitation trend: {{ nowcast.precipitation_trend|default:"unavailable" }} · Radar: {{ nowcast.radar.status|default:"unavailable" }}</p>
+  {% if nowcast.radar.note %}<p class="meta">{{ nowcast.radar.note }}</p>{% endif %}
+  <ul class="factor-list">
+    {% for signal in nowcast.signals %}
+      <li>{{ signal }}</li>
+    {% endfor %}
+  </ul>
+  <p class="meta">{{ nowcast.confidence_note }}</p>
+</section>
+{% endif %}
+{% endif %}
