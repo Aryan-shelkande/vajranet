@@ -500,9 +500,6 @@ body.theme-storm.cond-sunny .atmosphere .atm-storm-glow,
 body.theme-storm.cond-clear .atmosphere .atm-storm-glow {
   opacity: 0.3;
 }
-body.theme-storm .site-header {
-  background: rgba(230, 238, 247, 0.9);
-}
 body.theme-storm .page-hero h1 {
   color: #f5f8fc;
   text-shadow: 0 1px 16px rgba(20, 30, 50, 0.35);
@@ -648,14 +645,6 @@ body.theme-night[data-intensity="high"] .atmosphere .atm-sky {
     radial-gradient(ellipse 55% 40% at 70% 10%, rgba(85, 100, 170, 0.28), transparent 58%),
     linear-gradient(180deg, #060e1c 0%, #0e1a32 40%, #162844 100%);
 }
-body.theme-night { color: var(--text); }
-body.theme-night .site-header { background: rgba(244, 250, 255, 0.86); }
-body.theme-night .brand,
-body.theme-night .nav a,
-body.theme-night .header-meta { color: var(--text); }
-body.theme-night .nav a { color: var(--muted); }
-body.theme-night .nav a:hover,
-body.theme-night .nav a[aria-current="page"] { color: var(--text); }
 body.theme-night .page-hero h1,
 body.theme-night .hero-greeting {
   color: #f4f8ff;
@@ -917,7 +906,6 @@ body.theme-rain .atmosphere .atm-lightning,
 body.theme-rain .atmosphere .atm-stars,
 body.theme-rain .atmosphere .atm-orb,
 body.theme-rain .atmosphere .atm-storm-glow { opacity: 0; }
-body.theme-rain .site-header { background: rgba(236, 247, 250, 0.9); }
 body.theme-rain .page-hero h1 { color: #f4fbff; text-shadow: 0 1px 14px rgba(12, 40, 56, 0.35); }
 body.theme-rain .page-hero p { color: rgba(236, 248, 252, 0.92); }
 
@@ -951,3 +939,40 @@ body.theme-plain .atmosphere .atm-rain { opacity: 0; }
 body.theme-night.sky-lock .atmosphere .atm-stars { opacity: 0.82; }
 body.theme-night.sky-lock .atmosphere .atm-moon { opacity: 0.74; }
 body.theme-night.sky-lock .atmosphere .atm-clouds { opacity: 0.2; }
+
+/* —— Overview after dark: night sky behind the hero —— */
+body.theme-sunrise.tod-night .atmosphere .atm-sky {
+  background: linear-gradient(180deg, #0b1733 0%, #182a57 38%, #2f4580 72%, #4d5f98 100%);
+  filter: none;
+  animation: none;
+}
+body.theme-sunrise.tod-night .atmosphere .atm-orb,
+body.theme-sunrise.tod-night .atmosphere .atm-horizon { opacity: 0; }
+body.theme-sunrise.tod-night .atmosphere .atm-stars { opacity: 0.75; }
+body.theme-sunrise.tod-night .atmosphere .atm-moon { opacity: 0.6; }
+body.theme-sunrise.tod-night .atmosphere .atm-clouds { opacity: 0.12; }
+
+body.theme-sunrise.tod-night .wx-location,
+body.theme-sunrise.tod-night .wx-condition { color: #f1f5fb; }
+body.theme-sunrise.tod-night .wx-feels,
+body.theme-sunrise.tod-night .wx-hero-meta .wx-source-label { color: rgba(226, 232, 240, 0.78); }
+body.theme-sunrise.tod-night .wx-hero-inner .condition-temp {
+  background: linear-gradient(135deg, #ffffff 0%, #c7d7f5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+body.theme-sunrise.tod-night .wx-hero-glow {
+  background: radial-gradient(circle, rgba(203, 213, 225, 0.28) 0%, transparent 70%);
+}
+body.theme-sunrise.tod-night #condition-place { color: #f1f5fb; }
+body.theme-sunrise.tod-night .wx-hero-meta .badge {
+  color: #bae6fd;
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(125, 211, 252, 0.45);
+}
+body.theme-sunrise.tod-night .wx-hero-banner .chip.active {
+  color: #fff;
+  background: rgba(56, 169, 232, 0.85);
+  border-color: transparent;
+}

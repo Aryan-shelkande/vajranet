@@ -169,10 +169,31 @@
     layers: {},
     radarLayer: null,
     basemapLayer: null,
-    selectedCity: window.VAJRANET_CITY || "Pune",
+    selectedCity: "Pune",
     selectedMarker: null,
     cityIndex: {},
     searchTimer: null,
+
+    _getCity() {
+      return window.VAJRANET_CITY || this.selectedCity;
+    },
+
+    _saveCity(city) {
+      if (!city) return;
+      try { localStorage.setItem("vajranet-city", city); } catch (_) {}
+    },
+
+    refreshNavCity() {
+      const city = this._getCity();
+      if (!city) return;
+      document.querySelectorAll(".nav a[href]").forEach((a) => {
+        try {
+          const u = new URL(a.href, location.origin);
+          u.searchParams.set("city", city);
+          a.href = u.pathname + u.search;
+        } catch (_) {}
+      });
+    },
 
     setGreeting() {
       const label = document.getElementById("hero-greeting-label");
@@ -204,33 +225,71 @@
       const el = document.getElementById("wx-icon");
       if (!el) return;
       const state = atmosphereFromWeather(weather, null);
-      if (state === "sunny" || state === "extreme-heat") {
-        el.classList.add("sun");
-        el.innerHTML = `
-          <circle cx="36" cy="36" r="12" fill="#f59e0b"/>
-          ${[0, 45, 90, 135, 180, 225, 270, 315]
-            .map(
-              (a) =>
-                `<rect class="ray" x="34" y="8" width="4" height="10" rx="2" fill="#fbbf24" transform="rotate(${a} 36 36)"/>`
-            )
-            .join("")}`;
-      } else if (state === "rain" || state === "heavy-rain" || state === "thunderstorm") {
+      const isNight = document.body.dataset.timeOfDay === "night";
+      if ((state === "sunny" || state === "extreme-heat") && isNight) {
         el.classList.remove("sun");
         el.innerHTML = `
-          <ellipse cx="30" cy="30" rx="14" ry="10" fill="#94a3b8"/>
-          <ellipse cx="44" cy="32" rx="12" ry="9" fill="#647c91"/>
-          <path d="M28 44 l-2 10 M36 44 l-2 12 M44 44 l-2 9" stroke="#38a9e8" stroke-width="2" stroke-linecap="round"/>
-          ${
-            state === "thunderstorm"
-              ? '<path d="M40 38 L34 48 H40 L36 58" fill="#f59e0b" stroke="#b45309" stroke-width="1"/>'
-              : ""
-          }`;
+          <defs>
+            <radialGradient id="mg" cx="40%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#fdfcf5"/>
+              <stop offset="100%" stop-color="#cbd5e1"/>
+            </radialGradient>
+            <mask id="mm"><rect width="72" height="72" fill="#fff"/><circle cx="46" cy="28" r="15" fill="#000"/></mask>
+          </defs>
+          <circle cx="36" cy="36" r="24" fill="rgba(226,232,240,0.12)"/>
+          <circle cx="36" cy="36" r="18" fill="url(#mg)" mask="url(#mm)"/>
+          <circle cx="58" cy="14" r="1.2" fill="#fff"/>
+          <circle cx="12" cy="20" r="1" fill="#fff" opacity=".8"/>
+          <circle cx="62" cy="50" r=".9" fill="#fff" opacity=".7"/>`;
+      } else if (state === "sunny" || state === "extreme-heat") {
+        el.classList.add("sun");
+        el.innerHTML = `
+          <defs>
+            <radialGradient id="sg" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#fef08a"/>
+              <stop offset="100%" stop-color="#f59e0b"/>
+            </radialGradient>
+          </defs>
+          <circle cx="36" cy="36" r="16" fill="url(#sg)" filter="blur(0.5px)"/>
+          <circle cx="36" cy="36" r="22" fill="rgba(251,191,36,0.12)"/>
+          <g class="rays">${[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]
+            .map((a) => `<rect x="34.5" y="5" width="3" height="9" rx="1.5" fill="#fbbf24" transform="rotate(${a} 36 36)"/>`)
+            .join("")}</g>`;
+      } else if (state === "thunderstorm" || state === "heavy-rain") {
+        el.classList.remove("sun");
+        el.innerHTML = `
+          <defs>
+            <radialGradient id="cg" cx="40%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#94a3b8"/>
+              <stop offset="100%" stop-color="#475569"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="28" cy="28" rx="16" ry="12" fill="url(#cg)"/>
+          <ellipse cx="46" cy="30" rx="14" ry="11" fill="#64748b"/>
+          <ellipse cx="37" cy="24" rx="12" ry="10" fill="#7c8fa6"/>
+          <path d="M24 42 l-3 12 M32 42 l-3 14 M40 42 l-3 12 M48 42 l-3 11" stroke="#7dd3fc" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+          <path d="M41 36 L35 48 H41 L37 60" fill="#fbbf24" stroke="#d97706" stroke-width="1" stroke-linejoin="round"/>`;
+      } else if (state === "rain") {
+        el.classList.remove("sun");
+        el.innerHTML = `
+          <ellipse cx="28" cy="28" rx="15" ry="11" fill="#94a3b8"/>
+          <ellipse cx="46" cy="30" rx="13" ry="10" fill="#7c8fa6"/>
+          <ellipse cx="37" cy="25" rx="11" ry="9" fill="#b0bcc8"/>
+          <path d="M26 44 l-3 11 M34 44 l-3 13 M42 44 l-3 11 M50 44 l-3 10" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>`;
       } else {
         el.classList.remove("sun");
         el.innerHTML = `
-          <circle cx="26" cy="28" r="10" fill="#fbbf24" opacity="0.85"/>
-          <ellipse cx="40" cy="34" rx="16" ry="11" fill="#cbd5e1"/>
-          <ellipse cx="28" cy="36" rx="12" ry="9" fill="#e2e8f0"/>`;
+          <defs>
+            <radialGradient id="pg" cx="40%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#fef3c7"/>
+              <stop offset="100%" stop-color="#f59e0b"/>
+            </radialGradient>
+          </defs>
+          <circle cx="24" cy="30" r="13" fill="url(#pg)" opacity="0.9"/>
+          <circle cx="24" cy="30" r="18" fill="rgba(251,191,36,0.1)"/>
+          <ellipse cx="44" cy="36" rx="18" ry="13" fill="#e2e8f0"/>
+          <ellipse cx="30" cy="38" rx="14" ry="10" fill="#f1f5f9"/>
+          <ellipse cx="50" cy="34" rx="10" ry="8" fill="#cbd5e1"/>`;
       }
     },
 
@@ -290,11 +349,8 @@
       try {
         const glMap = layer.getMaplibreMap && layer.getMaplibreMap();
         if (glMap) {
-          glMap.on("error", (e) => {
-            const msg = (e && e.error && e.error.message) || "";
-            if (/403|401|failed|error/i.test(msg)) {
-              this.showMapError("Map temporarily unavailable. Please retry.");
-            }
+          glMap.on("error", () => {
+            this.showMapError("Map temporarily unavailable. Please retry.");
           });
           glMap.once("load", () => {
             this.hideMapError();
@@ -347,7 +403,9 @@
       });
 
       this.loadCityMarkers().then(() => {
-        this.highlightSelectedCity(this.selectedCity || window.VAJRANET_CITY);
+        const city = window.VAJRANET_CITY || this.selectedCity;
+        this.selectedCity = city;
+        this.highlightSelectedCity(city);
       });
       this.loadEarthquakes();
       this.loadAlertsPill();
@@ -678,6 +736,7 @@
     async selectCity(city, { pushUrl } = {}) {
       this.selectedCity = city;
       window.VAJRANET_CITY = city;
+      this._saveCity(city);
       const input = document.getElementById("city-input");
       if (input) input.value = city;
       if (pushUrl) {
@@ -685,6 +744,7 @@
         const url = `/?city=${encodeURIComponent(city)}&view=${encodeURIComponent(view)}`;
         window.history.pushState({ city }, "", url);
       }
+      this.refreshNavCity();
       await this.refreshDashboard(city);
       this.loadAlertsPill(city);
       this.highlightSelectedCity(city);
@@ -821,23 +881,28 @@
     },
 
     updateForecast(forecast) {
-      const hourly = (forecast.hourly || []).slice(0, 12);
+      const hourly = (forecast.hourly || []).slice(0, 14);
       const daily = (forecast.daily || []).slice(0, 7);
       const strip = document.getElementById("hourly-strip");
       if (strip && hourly.length) {
         strip.innerHTML = hourly
           .map((h, i) => {
             const t = i === 0 ? "Now" : String(h.time || "").slice(11, 16);
+            const hh = String(h.time || "").slice(11, 13);
+            const nightHour = hh !== "" && (hh < "06" || hh >= "19");
             const icon = h.thunderstorm_hint
               ? "⛈"
               : h.precipitation_mm > 0
                 ? "🌧"
-                : weatherEmoji({ weather_code: h.weather_code });
-            return `<div class="hour-card">
+                : nightHour && (h.weather_code === 0 || h.weather_code === 1)
+                  ? "🌙"
+                  : weatherEmoji({ weather_code: h.weather_code });
+            const nowCls = i === 0 ? " hour-now" : "";
+            return `<div class="hour-card${nowCls}">
               <div class="t">${t}</div>
               <div class="icon">${icon}</div>
               <strong>${h.temperature_c == null ? "—" : Math.round(h.temperature_c)}°</strong>
-              <div class="t">${h.precipitation_probability_pct ?? "—"}%</div>
+              <div class="t precip-prob">${h.precipitation_probability_pct ?? 0}%</div>
             </div>`;
           })
           .join("");
@@ -845,14 +910,25 @@
       const dailyStrip = document.getElementById("daily-strip");
       if (dailyStrip && daily.length) {
         dailyStrip.innerHTML = daily
-          .map(
-            (d) => `<div class="day-card">
-              <div class="t">${d.time || ""}</div>
-              <div class="icon">🌤</div>
-              <strong>${d.temperature_max_c == null ? "—" : Math.round(d.temperature_max_c)}° / ${d.temperature_min_c == null ? "—" : Math.round(d.temperature_min_c)}°</strong>
-              <div class="t">${d.precipitation_mm ?? 0} mm</div>
-            </div>`
-          )
+          .map((d, i) => {
+            const dayLabel = i === 0 ? "Today" : (d.time || "").slice(5);
+            const icon = d.thunderstorm_hint ? "⛈"
+              : (d.precipitation_mm > 2) ? "🌧"
+              : (d.weather_code === 0 || d.weather_code === 1) ? "☀️"
+              : d.weather_code === 2 ? "⛅"
+              : "🌤";
+            const todayCls = i === 0 ? " day-today" : "";
+            return `<div class="day-card${todayCls}">
+              <div class="day-label">${dayLabel}</div>
+              <div class="day-icon">${icon}</div>
+              <div class="day-cond">${d.weather_description || ""}</div>
+              <div class="day-precip">${d.precipitation_probability_pct ?? 0}%</div>
+              <div class="day-range">
+                <span class="temp-hi">${d.temperature_max_c == null ? "—" : Math.round(d.temperature_max_c)}°</span>
+                <span class="temp-lo">${d.temperature_min_c == null ? "—" : Math.round(d.temperature_min_c)}°</span>
+              </div>
+            </div>`;
+          })
           .join("");
       }
       window.VAJRANET_DAILY = daily.map((d) => ({
@@ -1040,6 +1116,15 @@
     VajraNet.initEmergencyKit();
     VajraNet.initAssistant();
     VajraNet.setGreeting();
+
+    // Sync selectedCity from page context (set by each page's extra_js block)
+    // and persist it to localStorage for cross-page state sharing.
+    if (window.VAJRANET_CITY) {
+      VajraNet.selectedCity = window.VAJRANET_CITY;
+      VajraNet._saveCity(window.VAJRANET_CITY);
+    }
+    VajraNet.refreshNavCity();
+
     window.addEventListener("popstate", (ev) => {
       const city = (ev.state && ev.state.city) || new URLSearchParams(location.search).get("city");
       if (city) VajraNet.selectCity(city, { pushUrl: false });

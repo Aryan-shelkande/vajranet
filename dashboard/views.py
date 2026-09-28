@@ -459,7 +459,10 @@ class SafetyPage(TemplateView):
         ctx["guidelines"] = SafetyGuideline.objects.filter(is_published=True)
         ctx["kit_items"] = EmergencyKitItem.objects.all()
         ctx["page_title"] = "Disaster Preparedness"
-        ctx.update(_theme_context("cloudy"))
+        ctx.update(_theme_context("storm"))
+        ctx["page_theme"] = "storm"
+        ctx["atmosphere"] = "thunderstorm"
+        ctx["body_class"] = "sky-lock"
         return ctx
 
 

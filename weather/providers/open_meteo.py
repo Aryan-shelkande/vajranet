@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from weather.providers.base import (
     ForecastBundle,
@@ -113,7 +115,12 @@ class OpenMeteoProvider(WeatherProvider):
         data = http_get_json(FORECAST_URL, params=params, provider=self.name)
         hourly_raw = data.get("hourly") or {}
         daily_raw = data.get("daily") or {}
-        hourly = _zip_series(hourly_raw, limit=24)
+        # Open-Meteo's hourly series begins at local midnight; start from the current hour.
+        this_hour = datetime.now(ZoneInfo(params["timezone"])).strftime("%Y-%m-%dT%H:00")
+        hourly = [
+            row for row in _zip_series(hourly_raw, limit=len(hourly_raw.get("time") or []))
+            if str(row.get("time") or "") >= this_hour
+        ][:24]
         daily = _zip_series(daily_raw, limit=7)
 
         for row in hourly:

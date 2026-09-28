@@ -43,6 +43,18 @@
 {% endblock %}
 {% block extra_js %}
 <script>
+  // Restore saved city from localStorage when URL has no explicit city param.
+  // This preserves the selected city when navigating here from Overview/Weather.
+  (function () {
+    if (!new URLSearchParams(location.search).get("city")) {
+      try {
+        var saved = localStorage.getItem("vajranet-city");
+        if (saved) {
+          location.replace(location.pathname + "?city=" + encodeURIComponent(saved));
+        }
+      } catch (_) {}
+    }
+  })();
   window.VAJRANET_CITY = "{{ city|escapejs }}";
   window.VAJRANET_WEATHER = null;
   document.addEventListener("DOMContentLoaded", () => {
